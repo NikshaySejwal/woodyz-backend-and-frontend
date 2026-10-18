@@ -42,7 +42,7 @@ public class CouponController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Coupon> updateCoupon(@PathVariable Long id, @RequestBody Coupon input) {
-        Coupon coupon = couponRepository.findById(id).orElse(null);
+        Coupon coupon = couponRepository.findById(java.util.Objects.requireNonNull(id)).orElse(null);
         if (coupon == null) {
             return ResponseEntity.notFound().build();
         }
@@ -55,10 +55,10 @@ public class CouponController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCoupon(@PathVariable Long id) {
-        if (!couponRepository.existsById(id)) {
+        if (!couponRepository.existsById(java.util.Objects.requireNonNull(id))) {
             return ResponseEntity.notFound().build();
         }
-        couponRepository.deleteById(id);
+        couponRepository.deleteById(java.util.Objects.requireNonNull(id));
         return ResponseEntity.noContent().build();
     }
 }

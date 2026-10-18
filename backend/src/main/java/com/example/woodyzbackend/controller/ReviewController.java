@@ -73,7 +73,7 @@ public class ReviewController {
     public ReviewSummaryDTO getReviewSummary(@PathVariable Long productId) {
         List<Review> reviews = reviewService.getReviewsByProductId(productId);
         double average = reviews.stream()
-                .mapToInt(Review::getRating)
+                .mapToInt(r -> r.getRating())
                 .average()
                 .orElse(0.0);
         return new ReviewSummaryDTO(reviews, average);

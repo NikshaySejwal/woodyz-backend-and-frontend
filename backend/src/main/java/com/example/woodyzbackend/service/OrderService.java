@@ -125,7 +125,8 @@ public class OrderService {
             if (item.getProductId() == null || item.getQuantity() == null || item.getQuantity() < 1 || item.getQuantity() > 100) {
                 throw new IllegalArgumentException("Invalid cart item");
             }
-            Product product = productRepository.findById(item.getProductId()).orElseThrow(
+            Long productId = java.util.Objects.requireNonNull(item.getProductId(), "productId must not be null");
+            Product product = productRepository.findById(productId).orElseThrow(
                     () -> new IllegalArgumentException("Product not found"));
             total += product.getPrice() * item.getQuantity();
         }

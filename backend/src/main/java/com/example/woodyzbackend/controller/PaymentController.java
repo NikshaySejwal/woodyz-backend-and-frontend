@@ -1,7 +1,6 @@
 package com.example.woodyzbackend.controller;
 
 import com.example.woodyzbackend.service.StripeService;
-import com.example.woodyzbackend.dto.CheckoutItemRequest;
 import com.example.woodyzbackend.entity.Product;
 import com.example.woodyzbackend.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;

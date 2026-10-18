@@ -53,7 +53,7 @@ public class UserController {
     @org.springframework.web.bind.annotation.DeleteMapping("/{username}")
     public ResponseEntity<Void> blacklistUser(@PathVariable String username, Authentication authentication) {
         boolean admin = authentication != null && authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority).anyMatch("ROLE_ADMIN"::equals);
+                .map(a -> a.getAuthority()).anyMatch("ROLE_ADMIN"::equals);
         if (!admin) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -70,7 +70,7 @@ public class UserController {
     public ResponseEntity<Void> updateBlacklist(@PathVariable String username, @RequestBody java.util.Map<String, Boolean> body,
             Authentication authentication) {
         boolean admin = authentication != null && authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority).anyMatch("ROLE_ADMIN"::equals);
+                .map(a -> a.getAuthority()).anyMatch("ROLE_ADMIN"::equals);
         if (!admin) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }

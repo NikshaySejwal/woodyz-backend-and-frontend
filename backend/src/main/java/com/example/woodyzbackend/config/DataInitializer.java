@@ -82,7 +82,7 @@ public class DataInitializer {
                 o1.setTotalAmount(59.98);
                 o1.setStatus("Shipped");
                 o1.setCustomerEmail("explorer@example.com");
-                com.example.woodyzbackend.entity.Order savedOrder = orderRepository.save(o1);
+                orderRepository.save(o1);
 
                 com.example.woodyzbackend.entity.OrderStatusHistory h1 = new com.example.woodyzbackend.entity.OrderStatusHistory();
                 h1.setOrderId(1L);
