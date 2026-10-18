@@ -1,6 +1,7 @@
 import os
 import sys
 from datetime import datetime
+from uuid import uuid4
 
 import requests
 
@@ -88,7 +89,13 @@ def run_user_audit():
 
     items = [{"productId": product["id"], "quantity": 1} for product in products[:2]]
     record("multiple cart items can be represented", len(items) == 2, f"{len(items)} checkout items prepared")
-    payment = request(session, "POST", "/payments/create-payment-intent", json={"items": items})
+    payment = request(
+        session,
+        "POST",
+        "/payments/create-payment-intent",
+        json={"items": items},
+        headers={"Idempotency-Key": str(uuid4())},
+    )
     if payment.status_code == 200 and payment.json().get("clientSecret"):
         record("create Stripe payment intent", True, "clientSecret returned")
         if not RUN_LIVE_PAYMENT:

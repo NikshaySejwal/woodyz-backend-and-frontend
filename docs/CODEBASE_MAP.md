@@ -56,7 +56,7 @@ woodyz-frontend/
 - `pages/products.js`: product catalog.
 - `pages/products/[id].js`: product detail, product fetch, product JSON-LD.
 - `pages/cart.js`: cart view.
-- `pages/checkout.js`: sends product IDs and quantities for server-priced payment intents and submits the verified payment intent with the order.
+- `pages/checkout.js`: sends product IDs and quantities for server-priced payment intents, retains a per-user/per-cart UUID idempotency key in session storage for retries, and submits the verified PaymentIntent with the order.
 - `pages/orders.js`: authenticated order history.
 - `pages/profile.js`: authenticated profile.
 - `pages/track/[id].js`: order tracking.
@@ -74,17 +74,18 @@ woodyz-frontend/
 - `controller/AuthController.java`: login and signup endpoints.
 - `controller/ProductController.java`: public product reads and admin product writes.
 - `controller/OrderController.java`: authenticated, ownership-aware order reads, history, and creation.
-- `controller/PaymentController.java`: authenticated Stripe payment-intent endpoint with product-repository pricing.
+- `controller/PaymentController.java`: authenticated Stripe payment-intent endpoint with product-repository pricing and required UUID `Idempotency-Key`, plus a signed public webhook receiver.
 - `controller/ReviewController.java`: product review endpoints.
 - `controller/SupportTicketController.java`: support ticket endpoints.
-- `service/OrderService.java`: server-side total calculation, payment verification, order persistence, history, and confirmation email.
-- `service/StripeService.java`: Stripe payment-intent creation and status/amount verification.
+- `service/OrderService.java`: server-side total calculation, payment verification, PaymentIntent retry deduplication, order persistence, history, and confirmation email.
+- `service/StripeService.java`: Stripe payment-intent creation with request idempotency, status/amount verification, and webhook signature verification.
+- `service/StripeWebhookService.java`: persists verified Stripe webhook event IDs once for replay deduplication; it does not drive fulfillment.
 - `service/EmailService.java`: email integration.
 - `config/SecurityConfig.java`: JWT/stateless security and route rules.
 - `security/JwtAuthenticationFilter.java`: bearer token authentication.
 - `security/JwtTokenProvider.java`: token creation and validation.
-- `entity/*.java`: User, Product, Order, OrderStatusHistory, Review, and SupportTicket tables.
-- `repository/*.java`: Spring Data access interfaces.
+- `entity/*.java`: User, Product, Order, OrderStatusHistory, StripeWebhookEvent, Review, and SupportTicket tables.
+- `repository/*.java`: Spring Data access interfaces, including PaymentIntent lookup and Stripe event replay deduplication.
 - `src/main/resources/application.properties`: environment-backed configuration with required production secrets.
 
 ## 5. API Summary
@@ -93,8 +94,9 @@ woodyz-frontend/
 - `POST /api/auth/signup`: public registration.
 - `GET /api/products`, `GET /api/products/{id}`: public product reads.
 - `POST|PUT|DELETE /api/products`: intended admin catalog writes.
-- `GET|POST /api/orders`: authenticated; customer reads are ownership-scoped and order totals/status are server-controlled.
-- `POST /api/payments/create-payment-intent`: authenticated; calculates the amount from product IDs and quantities.
+- `GET|POST /api/orders`: authenticated; customer reads are ownership-scoped, order totals/status are server-controlled, and repeated submissions for one PaymentIntent return the existing same-customer order.
+- `POST /api/payments/create-payment-intent`: authenticated; calculates the amount from product IDs and quantities and requires a UUID `Idempotency-Key`, scoped to the authenticated user and forwarded to Stripe.
+- `POST /api/payments/webhook`: public network route, but accepts only Stripe-signature-verified events; configured event IDs are persisted once. Set `STRIPE_WEBHOOK_SECRET` to enable it.
 - `GET /api/reviews/product/{productId}`: public reviews.
 - `POST /api/reviews/`: currently public submission.
 - `GET|POST|PUT /api/support`: mixed public/user/admin access; requires validation and ownership review.
@@ -120,6 +122,7 @@ Names observed:
 - `APP_JWT_SECRET`
 - `SENDGRID_API_KEY`
 - `STRIPE_API_KEY`
+- `STRIPE_WEBHOOK_SECRET` (optional; required to enable Stripe webhook verification)
 - `SPRING_REDIS_HOST`
 - `SPRING_REDIS_PORT`
 - `NEXT_PUBLIC_SITE_URL`
@@ -128,14 +131,18 @@ Names observed:
 - `BACKEND_URL`
 - `FRONTEND_ORIGIN`
 
+`Idempotency-Key` is a required request header for `POST /api/payments/create-payment-intent`; it is not an environment variable. The server scopes the UUID to the authenticated username before forwarding it to Stripe.
+
 Never place real values in this document.
 
 ## 9. Testing and Verification
 
 - Frontend production build has previously passed with `npm run build`.
-- Backend Maven tests have previously passed when `JAVA_HOME` and `MAVEN_HOME` were set explicitly.
-- No repository test source files were found by the audit scan.
-- Docker backend build uses `-DskipTests`.
+- GitHub Actions runs `mvn -B -f backend/pom.xml verify` with Java 21 before publishing images.
+- Thirteen backend unit tests currently cover order pricing/identity, payment rejection, PaymentIntent retry ownership, request idempotency keys, webhook signature verification, webhook event deduplication, and controller input handling. Broader auth, database integration, and fulfillment coverage is still needed.
+- The backend Docker build uses `-DskipTests`; CI verification runs separately.
+- `orders.payment_intent_id` and Stripe webhook event IDs are unique at the database level. Check for pre-existing duplicate PaymentIntent IDs before deploying the schema change. Webhook events are audit/replay receipts only; they do not confirm or create orders.
+- CI publishes backend and frontend Docker images tagged with both `latest` and the commit SHA. Image deployment/selection is not wired into Compose.
 
 ## 10. AI Working Rules
 

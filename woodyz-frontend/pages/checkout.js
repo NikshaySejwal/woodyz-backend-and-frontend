@@ -14,6 +14,12 @@ const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
   : null;
 
+const getCartFingerprint = (items) => JSON.stringify(
+  items
+    .map((item) => ({ productId: item.id, quantity: item.quantity, price: item.price }))
+    .sort((left, right) => left.productId - right.productId)
+);
+
 export default function Checkout() {
   const { cartItems, cartTotal, clearCart, isLoaded } = useCart();
   const { user } = useAuth();
@@ -21,16 +27,31 @@ export default function Checkout() {
   const [clientSecret, setClientSecret] = useState("");
   const router = useRouter();
 
-  // Fetch Payment Intent when the component mounts or cart total changes
+  // Reuse the same Stripe request key when this cart is retried in the session.
   useEffect(() => {
-    if (cartTotal > 0) {
+    if (cartTotal > 0 && user?.id) {
+      let active = true;
+      setClientSecret("");
+      const cartFingerprint = getCartFingerprint(cartItems);
+      const storageKey = `woodyz-payment-intent:${user.id}:${cartFingerprint}`;
+      let requestKey = window.sessionStorage.getItem(storageKey);
+      if (!requestKey) {
+        requestKey = window.crypto.randomUUID();
+        window.sessionStorage.setItem(storageKey, requestKey);
+      }
       api.post('/api/payments/create-payment-intent', {
         items: cartItems.map((item) => ({ productId: item.id, quantity: item.quantity }))
+      }, { headers: { 'Idempotency-Key': requestKey } })
+      .then((res) => {
+        if (active) setClientSecret(res.data.clientSecret);
       })
-      .then(res => setClientSecret(res.data.clientSecret))
-      .catch(err => console.error("Error fetching payment intent", err));
+      .catch((err) => {
+        if (active) console.error("Error fetching payment intent", err);
+      });
+
+      return () => { active = false; };
     }
-  }, [cartTotal]);
+  }, [cartItems, cartTotal, user?.id]);
 
   // If not loaded yet, don't run redirect logic
   if (!isLoaded) return null;
@@ -41,7 +62,8 @@ export default function Checkout() {
         paymentIntentId,
         items: cartItems.map((item) => ({ productId: item.id, quantity: item.quantity }))
       });
-      
+      const cartFingerprint = getCartFingerprint(cartItems);
+      window.sessionStorage.removeItem(`woodyz-payment-intent:${user.id}:${cartFingerprint}`);
       alert('Payment Successful! An order confirmation email has been sent.');
       clearCart();
       router.push('/');

@@ -2,6 +2,7 @@ const { chromium } = require('playwright');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
+const { randomUUID } = require('crypto');
 
 const BACKEND_URL = 'http://localhost:8080';
 const FRONTEND_URL = 'http://localhost:3000';
@@ -156,7 +157,10 @@ async function runFullQA() {
       const intentRes = await axios.post(`${BACKEND_URL}/api/payments/create-payment-intent`, {
         items: [{ productId: 1, quantity: 2 }]
       }, {
-        headers: { Authorization: `Bearer ${tokenUserA}` }
+        headers: {
+          Authorization: `Bearer ${tokenUserA}`,
+          'Idempotency-Key': randomUUID()
+        }
       });
       console.log("Payment Intent response clientSecret present:", !!intentRes.data.clientSecret);
       console.log("Payment Intent amount calculated by server:", intentRes.data.amount);

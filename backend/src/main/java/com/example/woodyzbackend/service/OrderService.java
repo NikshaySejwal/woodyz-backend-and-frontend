@@ -86,6 +86,16 @@ public class OrderService {
             throw new IllegalArgumentException("A verified payment and cart items are required");
         }
         double calculatedTotal = calculateTotal(order.getItems());
+        Order existingOrder = orderRepository.findByPaymentIntentId(order.getPaymentIntentId()).orElse(null);
+        if (existingOrder != null) {
+            if (!currentUser.getId().equals(existingOrder.getUserId())) {
+                throw new IllegalArgumentException("Payment intent has already been used");
+            }
+            if (Math.round(existingOrder.getTotalAmount() * 100) != Math.round(calculatedTotal * 100)) {
+                throw new IllegalArgumentException("Payment intent amount does not match the order");
+            }
+            return existingOrder;
+        }
         try {
             if (!stripeService.isPaid(order.getPaymentIntentId(), calculatedTotal)) {
                 throw new IllegalArgumentException("Payment has not been verified");

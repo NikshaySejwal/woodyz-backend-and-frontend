@@ -9,11 +9,12 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
 
 import com.example.woodyzbackend.dto.CheckoutItemRequest;
 
 @Entity
-@Table(name = "orders") // 'order' is a reserved keyword in PostgreSQL
+@Table(name = "orders", uniqueConstraints = @UniqueConstraint(name = "uk_orders_payment_intent_id", columnNames = "payment_intent_id")) // 'order' is a reserved keyword in PostgreSQL
 public class Order {
 
     @Id
@@ -23,6 +24,7 @@ public class Order {
     private double totalAmount;
     private String status; // e.g., "Pending", "Shipped", "Delivered"
     private String customerEmail;
+    @javax.persistence.Column(name = "payment_intent_id")
     private String paymentIntentId;
     private String deliveryAddress;
     private LocalDate estimatedDeliveryDate;

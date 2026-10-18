@@ -44,10 +44,11 @@ admin product UI
 
 ```text
 pages/checkout.js
-  -> POST /api/payments/create-payment-intent with product IDs and quantities
+  -> sessionStorage UUID keyed by authenticated user and cart fingerprint
+  -> POST /api/payments/create-payment-intent with product IDs, quantities, and Idempotency-Key
   -> PaymentController
   -> ProductRepository server-side price calculation
-  -> StripeService
+  -> StripeService + Stripe RequestOptions idempotency key
   -> Stripe client secret
   -> CheckoutForm Stripe confirmation
   -> POST /api/orders/ with payment intent ID and cart items
@@ -58,7 +59,7 @@ pages/checkout.js
   -> EmailService
 ```
 
-Remaining risk: payment webhooks and idempotency keys are not implemented.
+Order retries with the same PaymentIntent return the existing order for the same user; database uniqueness prevents duplicate PaymentIntent orders. The public `POST /api/payments/webhook` verifies `Stripe-Signature` using `STRIPE_WEBHOOK_SECRET` and stores unique event IDs in `stripe_webhook_events`. It currently acknowledges/deduplicates events only and does not reconcile payment state, create orders, or trigger fulfillment. Configure a Stripe endpoint to the public HTTPS backend URL ending in `/api/payments/webhook` and provide its signing secret to the backend.
 
 ### Order history
 
