@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
@@ -38,13 +39,13 @@ class ManufacturingQuoteRequestControllerTest {
         when(service.create(request)).thenReturn(saved);
 
         ResponseEntity<ManufacturingQuoteSubmissionResponseDTO> response = controller.createQuote(request);
+        ManufacturingQuoteSubmissionResponseDTO body = Objects.requireNonNull(response.getBody());
 
         assertEquals(201, response.getStatusCodeValue());
-        assertNotNull(response.getBody());
-        assertEquals(7L, response.getBody().getId());
-        assertEquals("NEW", response.getBody().getStatus());
-        assertNotNull(response.getBody().getCreatedAt());
-        assertEquals(3, response.getBody().getClass().getDeclaredFields().length);
+        assertEquals(7L, body.getId());
+        assertEquals("NEW", body.getStatus());
+        assertNotNull(body.getCreatedAt());
+        assertEquals(3, body.getClass().getDeclaredFields().length);
         verify(service).create(request);
     }
 
@@ -64,10 +65,11 @@ class ManufacturingQuoteRequestControllerTest {
         when(service.findLatest()).thenReturn(List.of(quote));
 
         ResponseEntity<List<ManufacturingQuoteResponseDTO>> response = controller.getAdminQuotes();
+        List<ManufacturingQuoteResponseDTO> body = Objects.requireNonNull(response.getBody());
 
         assertEquals(200, response.getStatusCodeValue());
-        assertEquals(1, response.getBody().size());
-        assertEquals("Signage", response.getBody().get(0).getProductType());
+        assertEquals(1, body.size());
+        assertEquals("Signage", body.get(0).getProductType());
         verify(service).findLatest();
     }
 

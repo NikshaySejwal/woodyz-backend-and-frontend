@@ -2,6 +2,16 @@ import { createContext, useState, useEffect, useContext } from 'react';
 import { useRouter } from 'next/router';
 import api from '../lib/api';
 
+const getAuthErrorMessage = (error, fallback) => {
+  const responseError = error.response?.data;
+  if (typeof responseError === 'string') return responseError;
+  if (typeof responseError?.message === 'string') return responseError.message;
+  if (typeof responseError?.error === 'string' && responseError.error !== 'Internal Server Error') {
+    return responseError.error;
+  }
+  return fallback;
+};
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -42,7 +52,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       console.error('Login error', error);
-      return { success: false, error: error.response?.data || 'Login failed' };
+      return { success: false, error: getAuthErrorMessage(error, 'Login failed') };
     }
   };
 
@@ -54,7 +64,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       console.error('Signup error', error);
-      return { success: false, error: error.response?.data || 'Signup failed' };
+      return { success: false, error: getAuthErrorMessage(error, 'Signup failed') };
     }
   };
 

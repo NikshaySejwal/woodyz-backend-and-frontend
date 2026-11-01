@@ -20,6 +20,7 @@ import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.PaymentIntent;
 
+@SuppressWarnings("null")
 class StripeWebhookServiceTest {
 
     private StripeWebhookService webhookService;

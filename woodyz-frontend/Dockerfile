@@ -24,6 +24,8 @@ ARG NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+ARG NEXT_PUBLIC_DEMO_PAYMENTS=false
+ENV NEXT_PUBLIC_DEMO_PAYMENTS=$NEXT_PUBLIC_DEMO_PAYMENTS
 
 # Install the exact dependency tree, build Next.js, then remove build-only
 # packages in the same layer so they are absent from the final image layers.

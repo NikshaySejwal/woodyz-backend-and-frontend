@@ -13,6 +13,7 @@ import api from '../lib/api';
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
   : null;
+const demoPaymentsEnabled = process.env.NEXT_PUBLIC_DEMO_PAYMENTS === 'true';
 
 const getCartFingerprint = (items) => JSON.stringify(
   items
@@ -25,6 +26,8 @@ export default function Checkout() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [clientSecret, setClientSecret] = useState("");
+  const [demoMethod, setDemoMethod] = useState('DEMO_QR');
+  const [demoPayment, setDemoPayment] = useState(null);
   const [shipping, setShipping] = useState({ firstName: '', lastName: '', address: '', city: '', zip: '' });
   const router = useRouter();
 
@@ -49,7 +52,7 @@ export default function Checkout() {
 
   // Reuse the same Stripe request key when this cart is retried in the session.
   useEffect(() => {
-    if (cartTotal > 0 && user?.id) {
+    if (!demoPaymentsEnabled && cartTotal > 0 && user?.id) {
       let active = true;
       setClientSecret("");
       const cartFingerprint = getCartFingerprint(cartItems);
@@ -73,6 +76,10 @@ export default function Checkout() {
     }
   }, [cartItems, cartTotal, user?.id]);
 
+  useEffect(() => {
+    setDemoPayment(null);
+  }, [getCartFingerprint(cartItems)]);
+
   // If not loaded yet, don't run redirect logic
   if (!isLoaded) return null;
 
@@ -82,6 +89,7 @@ export default function Checkout() {
       return;
     }
 
+    setLoading(true);
     try {
       await api.post('/api/orders/', {
         paymentIntentId,
@@ -90,12 +98,34 @@ export default function Checkout() {
       });
       const cartFingerprint = getCartFingerprint(cartItems);
       window.sessionStorage.removeItem(`woodyz-payment-intent:${user.id}:${cartFingerprint}`);
-      alert('Payment Successful! An order confirmation email has been sent.');
+      alert(paymentIntentId.startsWith('demo_')
+        ? 'Demo order recorded. No payment or email was sent.'
+        : 'Payment Successful! An order confirmation email has been sent.');
       clearCart();
       router.push('/');
     } catch (error) {
       console.error(error);
-      alert('Payment successful, but failed to record order. Please contact support.');
+      alert(paymentIntentId.startsWith('demo_')
+        ? 'Demo order could not be recorded. Please try again.'
+        : 'Payment successful, but failed to record order. Please contact support.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const prepareDemoPayment = async () => {
+    setLoading(true);
+    try {
+      const response = await api.post('/api/payments/demo-intent', {
+        method: demoMethod,
+        items: cartItems.map((item) => ({ productId: item.id, quantity: item.quantity })),
+      });
+      setDemoPayment(response.data);
+    } catch (error) {
+      console.error('Unable to prepare demo payment', error);
+      alert('Unable to prepare demo checkout. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -149,7 +179,40 @@ export default function Checkout() {
                     Payment Details
                   </h2>
                   
-                  {clientSecret ? (
+                  {demoPaymentsEnabled ? (
+                    <div className="space-y-5">
+                      <p role="status" className="rounded-xl border-2 border-orange bg-orange/10 p-4 text-sm font-bold">
+                        Local demo only. No real payment is processed and no confirmation email is sent.
+                      </p>
+                      <div role="group" aria-label="Demo payment method" className="grid gap-3 sm:grid-cols-2">
+                        <button type="button" aria-pressed={demoMethod === 'DEMO_QR'} onClick={() => { setDemoMethod('DEMO_QR'); setDemoPayment(null); }} className={`rounded-xl border-2 border-charcoal px-4 py-3 text-sm font-black ${demoMethod === 'DEMO_QR' ? 'bg-sage' : 'bg-white'}`}>
+                          QR payment (demo)
+                        </button>
+                        <button type="button" aria-pressed={demoMethod === 'DEMO_DELIVERY'} onClick={() => { setDemoMethod('DEMO_DELIVERY'); setDemoPayment(null); }} className={`rounded-xl border-2 border-charcoal px-4 py-3 text-sm font-black ${demoMethod === 'DEMO_DELIVERY' ? 'bg-sage' : 'bg-white'}`}>
+                          Pay on delivery (demo)
+                        </button>
+                      </div>
+                      {demoPayment?.method === 'DEMO_QR' && (
+                        <div className="flex flex-col items-center gap-2 rounded-xl border-2 border-charcoal p-4">
+                          <svg viewBox="0 0 21 21" role="img" aria-label="Decorative demo QR code; not scannable" className="h-36 w-36 border-4 border-white bg-white">
+                            <rect width="21" height="21" fill="white" />
+                            <path fill="black" d="M0 0h7v7H0zM1 1v5h5V1zM2 2h3v3H2zM14 0h7v7h-7zM15 1v5h5V1zM16 2h3v3h-3zM0 14h7v7H0zM1 15v5h5v-5zM2 16h3v3H2zM9 1h2v2H9zM8 5h2v2H8zM11 7h2v2h-2zM8 9h2v2H8zM12 10h2v2h-2zM9 13h2v2H9zM12 14h2v2h-2zM8 17h2v2H8zM14 18h2v2h-2zM17 9h2v2h-2zM18 12h2v2h-2zM15 5h2v2h-2zM19 15h2v2h-2z" />
+                          </svg>
+                          <span className="text-center text-xs font-bold">Decorative only — not scannable and not linked to a bank.</span>
+                        </div>
+                      )}
+                      {demoPayment ? (
+                        <button type="button" disabled={!shippingComplete || loading} onClick={() => handleOrderCompletion(demoPayment.paymentIntentId)} className="w-full btn-pop bg-cedar text-white border-4 border-charcoal py-4 rounded-xl font-black uppercase tracking-widest disabled:opacity-50">
+                          {loading ? 'Recording demo order…' : 'Confirm demo order'}
+                        </button>
+                      ) : (
+                        <button type="button" disabled={!shippingComplete || loading} onClick={prepareDemoPayment} className="w-full btn-pop bg-cedar text-white border-4 border-charcoal py-4 rounded-xl font-black uppercase tracking-widest disabled:opacity-50">
+                          {loading ? 'Preparing…' : 'Prepare demo checkout'}
+                        </button>
+                      )}
+                      {!shippingComplete && <p className="text-sm font-bold text-charcoal/50">Complete every shipping field before confirming your demo order.</p>}
+                    </div>
+                  ) : clientSecret ? (
                     <Elements stripe={stripePromise} options={{ clientSecret }}>
                       <CheckoutForm totalAmount={cartTotal} onPaymentSuccess={handleOrderCompletion} disabled={!shippingComplete} />
                     </Elements>

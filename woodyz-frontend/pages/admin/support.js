@@ -107,7 +107,7 @@ export default function AdminSupport() {
                             const msg = e.target.elements.reply.value;
                             try {
                               await api.post(`/api/support/${ticket.id}/message`, { message: msg });
-                              alert('Reply sent!');
+                              alert('Reply recorded in-app; no email was sent.');
                               e.target.reset();
                             } catch (err) {
                               alert('Failed to send reply');

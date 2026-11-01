@@ -38,7 +38,7 @@ export default function SupportBubble() {
             <div className="bg-white border-4 border-charcoal rounded-[32px] p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="font-display text-xl font-black">Help Desk</h3>
-                <button onClick={() => setIsOpen(false)} className="text-2xl hover:text-cedar transition-colors">
+                <button aria-label="Close help desk" onClick={() => setIsOpen(false)} className="text-2xl hover:text-cedar transition-colors">
                   <iconify-icon icon="ph:x-bold"></iconify-icon>
                 </button>
               </div>
@@ -85,6 +85,7 @@ export default function SupportBubble() {
 
       {/* Bubble Button */}
       <button
+        aria-label={isOpen ? 'Close help desk' : 'Contact support'}
         onClick={() => setIsOpen(!isOpen)}
         className={`w-16 h-16 rounded-full border-4 border-charcoal shadow-[6px_6px_0px_0px_#3A322B] flex items-center justify-center transition-all hover:scale-110 active:scale-95 ${isOpen ? 'bg-charcoal text-white' : 'bg-maple text-charcoal'}`}
       >

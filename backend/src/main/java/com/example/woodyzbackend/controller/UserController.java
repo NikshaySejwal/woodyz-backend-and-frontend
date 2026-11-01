@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,6 +46,7 @@ public class UserController {
         }
         com.example.woodyzbackend.dto.UserProfileDTO dto = new com.example.woodyzbackend.dto.UserProfileDTO(
                 user.getUsername(), user.getEmail(), user.getRole(), user.getAddress(), user.getPhone(), user.isBlacklisted());
+        dto.setId(user.getId());
         return ResponseEntity.ok(dto);
     }
 
@@ -95,6 +95,7 @@ public class UserController {
         com.example.woodyzbackend.dto.UserProfileDTO dto = new com.example.woodyzbackend.dto.UserProfileDTO(
                 currentUser.getUsername(), currentUser.getEmail(), currentUser.getRole(),
                 currentUser.getAddress(), currentUser.getPhone(), currentUser.isBlacklisted());
+        dto.setId(currentUser.getId());
         return org.springframework.http.ResponseEntity.ok(dto);
     }
 

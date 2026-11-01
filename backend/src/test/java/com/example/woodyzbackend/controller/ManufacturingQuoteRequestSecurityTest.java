@@ -31,6 +31,7 @@ import com.example.woodyzbackend.service.ManufacturingQuoteRequestService;
 
 @WebMvcTest(ManufacturingQuoteRequestController.class)
 @Import(SecurityConfig.class)
+@SuppressWarnings("null")
 class ManufacturingQuoteRequestSecurityTest {
 
     @Autowired
@@ -43,9 +44,11 @@ class ManufacturingQuoteRequestSecurityTest {
     private ManufacturingQuoteRequestService service;
 
     @MockBean
+    @SuppressWarnings("unused")
     private JwtTokenProvider jwtTokenProvider;
 
     @MockBean
+    @SuppressWarnings("unused")
     private org.springframework.security.core.userdetails.UserDetailsService userDetailsService;
 
     @Test

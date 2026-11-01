@@ -6,7 +6,7 @@ import { useCart } from '../context/CartContext';
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
-  const { cartCount } = useCart();
+  const { cartCount, clearCart } = useCart();
 
   return (
     <header className="sticky top-0 z-40 bg-cream border-b-4 border-charcoal px-6 lg:px-12 py-4">
@@ -68,7 +68,10 @@ const Header = () => {
                 </span>
               </Link>
               <button
-                onClick={logout}
+                onClick={() => {
+                  clearCart();
+                  logout();
+                }}
                 className="btn-pop bg-white text-charcoal border-2 border-charcoal px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest no-underline"
               >
                 Logout

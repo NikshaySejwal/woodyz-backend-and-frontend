@@ -1,9 +1,6 @@
 package com.example.woodyzbackend.service;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,8 +14,7 @@ public class ProductService {
     private ProductRepository productRepository;
 
     public List<Product> getAllProducts() {
-        return StreamSupport.stream(productRepository.findAll().spliterator(), false)
-                .collect(Collectors.toList());
+        return productRepository.findAll();
     }
 
     public List<Product> getProductsByCategory(String category) {

@@ -41,6 +41,8 @@ public class UserProfileController {
     }
 
     private UserProfileDTO toDto(User user) {
-        return new UserProfileDTO(user.getUsername(), user.getEmail(), user.getRole(), user.getAddress(), user.getPhone(), user.isBlacklisted());
+        UserProfileDTO profile = new UserProfileDTO(user.getUsername(), user.getEmail(), user.getRole(), user.getAddress(), user.getPhone(), user.isBlacklisted());
+        profile.setId(user.getId());
+        return profile;
     }
 }

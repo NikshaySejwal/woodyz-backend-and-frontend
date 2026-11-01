@@ -20,6 +20,7 @@ woodyz-frontend/.yarn/*
 !woodyz-frontend/.yarn/versions
 
 # Environment and debug files
+.env
 **/.env*
 **/*.log
 **/npm-debug.log*

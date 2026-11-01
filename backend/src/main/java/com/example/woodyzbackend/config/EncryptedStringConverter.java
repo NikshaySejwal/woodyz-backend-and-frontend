@@ -66,6 +66,8 @@ public class EncryptedStringConverter implements AttributeConverter<String, Stri
             Cipher cipher = Cipher.getInstance(ALGORITHM);
             cipher.init(Cipher.DECRYPT_MODE, key(), new GCMParameterSpec(TAG_LENGTH, iv));
             return new String(cipher.doFinal(encrypted), StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException exception) {
+            return value;
         } catch (GeneralSecurityException exception) {
             throw new IllegalStateException("Unable to decrypt support message", exception);
         }

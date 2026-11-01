@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
-    "test:manufacturing-quote": "node --test tests/manufacturingQuoteValidation.test.mjs"
+    "test:manufacturing-quote": "node --test tests/manufacturingQuoteValidation.test.mjs",
+    "test:e2e:cart": "node --test tests/cart-*.e2e.test.mjs",
+    "test:e2e:demo": "node --test tests/mobile-product-layout.e2e.test.mjs && node --test tests/demo-checkout.e2e.test.mjs"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^6.3.0",

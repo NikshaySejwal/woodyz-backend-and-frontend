@@ -74,6 +74,7 @@ public class SecurityConfig {
                 .antMatchers(org.springframework.http.HttpMethod.GET, "/api/orders/{id}/history").authenticated()
                 .antMatchers(org.springframework.http.HttpMethod.POST, "/api/orders/**").authenticated()
                 .antMatchers(org.springframework.http.HttpMethod.POST, "/api/payments/webhook").permitAll()
+                .antMatchers(org.springframework.http.HttpMethod.POST, "/api/payments/demo-intent").authenticated()
                 .antMatchers("/api/payments/**").authenticated()
                 .anyRequest().authenticated();
 

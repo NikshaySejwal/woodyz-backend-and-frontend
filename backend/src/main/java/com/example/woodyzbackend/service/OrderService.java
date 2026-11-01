@@ -38,6 +38,9 @@ public class OrderService {
     @Autowired
     private StripeService stripeService;
 
+    @Autowired(required = false)
+    private DemoPaymentService demoPaymentService;
+
     public Iterable<Order> getAllOrders() {
         return orderRepository.findAll();
     }
@@ -102,8 +105,14 @@ public class OrderService {
             }
             return existingOrder;
         }
+        boolean demoPayment = order.getPaymentIntentId().startsWith(DemoPaymentService.PAYMENT_ID_PREFIX);
         try {
-            if (!stripeService.isPaid(order.getPaymentIntentId(), calculatedTotal)) {
+            if (demoPayment) {
+                if (demoPaymentService == null
+                        || !demoPaymentService.isPaid(order.getPaymentIntentId(), currentUser.getUsername(), calculatedTotal)) {
+                    throw new IllegalArgumentException("Demo payment has not been verified");
+                }
+            } else if (!stripeService.isPaid(order.getPaymentIntentId(), calculatedTotal)) {
                 throw new IllegalArgumentException("Payment has not been verified");
             }
         } catch (Exception exception) {
@@ -111,7 +120,11 @@ public class OrderService {
         }
         order.setTotalAmount(calculatedTotal);
         order.setStatus("Pending");
-        return saveOrder(order);
+        Order savedOrder = saveOrder(order);
+        if (demoPayment) {
+            demoPaymentService.consume(order.getPaymentIntentId(), currentUser.getUsername());
+        }
+        return savedOrder;
     }
 
     public Order updateStatus(Long orderId, String status, LocalDate estimatedDeliveryDate,
@@ -158,7 +171,8 @@ public class OrderService {
         String historyMessage = isNew ? "Order placed successfully!" : "Order status updated to " + order.getStatus();
         orderStatusHistoryRepository.save(new OrderStatusHistory(savedOrder.getId(), savedOrder.getStatus(), historyMessage));
 
-        if (isNew && savedOrder.getCustomerEmail() != null) {
+        if (isNew && savedOrder.getCustomerEmail() != null
+                && !savedOrder.getPaymentIntentId().startsWith(DemoPaymentService.PAYMENT_ID_PREFIX)) {
             emailService.sendOrderConfirmationEmail(savedOrder.getCustomerEmail(), savedOrder.getId());
         }
         return savedOrder;

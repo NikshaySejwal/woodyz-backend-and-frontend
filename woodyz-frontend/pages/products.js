@@ -30,7 +30,7 @@ export default function Products({ products }) {
         <meta name="description" content="Browse our complete collection of sustainable, handcrafted wooden toys — building sets, puzzles, pull toys, and more." />
       </Head>
 
-      <section className="py-16 px-6">
+      <section className="py-16 px-3 sm:px-6">
         <div className="max-w-7xl mx-auto">
           {/* Page Header */}
           <div className="text-center mb-16">
@@ -71,7 +71,7 @@ export default function Products({ products }) {
                   href={`/products/${product.id}`}
                   className="group block no-underline text-charcoal"
                 >
-                  <div className="relative aspect-square bg-white rounded-[40px] border-4 border-charcoal mb-6 overflow-hidden p-4 btn-pop">
+                  <div className="relative aspect-square bg-white rounded-[40px] border-4 border-charcoal mb-6 overflow-hidden p-2 sm:p-4 btn-pop">
                     <div className="w-full h-full bg-cream rounded-[28px] flex items-center justify-center overflow-hidden">
                       {product.imageUrl ? (
                         <img 

@@ -23,6 +23,7 @@ import com.example.woodyzbackend.repository.OrderStatusHistoryRepository;
 import com.example.woodyzbackend.repository.ProductRepository;
 import com.example.woodyzbackend.repository.UserRepository;
 
+@SuppressWarnings("null")
 class OrderServiceTest {
 
     private OrderService orderService;
@@ -32,6 +33,7 @@ class OrderServiceTest {
     private StripeService stripeService;
     private OrderStatusHistoryRepository historyRepository;
     private EmailService emailService;
+    private DemoPaymentService demoPaymentService;
 
     void setUp() {
         orderService = new OrderService();
@@ -41,6 +43,7 @@ class OrderServiceTest {
         stripeService = org.mockito.Mockito.mock(StripeService.class);
         historyRepository = org.mockito.Mockito.mock(OrderStatusHistoryRepository.class);
         emailService = org.mockito.Mockito.mock(EmailService.class);
+        demoPaymentService = org.mockito.Mockito.mock(DemoPaymentService.class);
 
         ReflectionTestUtils.setField(orderService, "orderRepository", orderRepository);
         ReflectionTestUtils.setField(orderService, "productRepository", productRepository);
@@ -48,6 +51,7 @@ class OrderServiceTest {
         ReflectionTestUtils.setField(orderService, "stripeService", stripeService);
         ReflectionTestUtils.setField(orderService, "orderStatusHistoryRepository", historyRepository);
         ReflectionTestUtils.setField(orderService, "emailService", emailService);
+        ReflectionTestUtils.setField(orderService, "demoPaymentService", demoPaymentService);
     }
 
     @Test
@@ -149,6 +153,38 @@ class OrderServiceTest {
                 () -> orderService.saveCustomerOrder(order, authentication));
         assertEquals("Payment verification failed", exception.getMessage());
         verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void saveCustomerOrderVerifiesAndConsumesLocalDemoPaymentWithoutSendingEmail() throws Exception {
+        setUp();
+        Authentication authentication = org.mockito.Mockito.mock(Authentication.class);
+        when(authentication.getName()).thenReturn("customer");
+        User customer = new User();
+        customer.setId(42L);
+        customer.setUsername("customer");
+        customer.setEmail("customer@example.com");
+        when(userRepository.findByUsername("customer")).thenReturn(customer);
+
+        Product product = new Product();
+        product.setPrice(25.50);
+        when(productRepository.findById(9L)).thenReturn(Optional.of(product));
+        when(demoPaymentService.isPaid("demo_test", "customer", 25.50)).thenReturn(true);
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        CheckoutItemRequest item = new CheckoutItemRequest();
+        item.setProductId(9L);
+        item.setQuantity(1);
+        Order order = new Order();
+        order.setPaymentIntentId("demo_test");
+        order.setItems(Collections.singletonList(item));
+
+        Order savedOrder = orderService.saveCustomerOrder(order, authentication);
+
+        assertEquals(25.50, savedOrder.getTotalAmount(), 0.001);
+        verify(demoPaymentService).isPaid("demo_test", "customer", 25.50);
+        verify(demoPaymentService).consume("demo_test", "customer");
+        verify(emailService, never()).sendOrderConfirmationEmail(any(), any());
     }
 
     @Test

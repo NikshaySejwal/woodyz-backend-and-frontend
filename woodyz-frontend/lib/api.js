@@ -10,7 +10,8 @@ const api = axios.create({
 
 export const resolveAssetUrl = (assetUrl) => {
   if (!assetUrl || /^https?:\/\//i.test(assetUrl)) return assetUrl;
-  return `${API_BASE_URL}${assetUrl.startsWith('/') ? assetUrl : `/${assetUrl}`}`;
+  const path = assetUrl.startsWith('/') ? assetUrl : `/${assetUrl}`;
+  return path.startsWith('/images/') ? path : `${API_BASE_URL}${path}`;
 };
 
 // Auto-attach auth token on client-side requests

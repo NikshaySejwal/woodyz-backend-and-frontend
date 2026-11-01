@@ -16,6 +16,7 @@ public class StripeWebhookService {
     private StripeWebhookEventRepository eventRepository;
 
     @Transactional
+    @SuppressWarnings("null")
     public boolean recordEvent(Event event) {
         if (eventRepository.existsByStripeEventId(event.getId())) {
             return false;
