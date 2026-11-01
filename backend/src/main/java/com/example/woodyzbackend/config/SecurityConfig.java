@@ -55,6 +55,8 @@ public class SecurityConfig {
                 .antMatchers(org.springframework.http.HttpMethod.POST, "/api/reviews/**").authenticated()
                 .antMatchers(org.springframework.http.HttpMethod.GET, "/api/reviews/user").authenticated()
                 .antMatchers(org.springframework.http.HttpMethod.POST, "/api/support", "/api/support/").permitAll()
+                .antMatchers(org.springframework.http.HttpMethod.POST, "/api/manufacturing/quotes").permitAll()
+                .antMatchers(org.springframework.http.HttpMethod.GET, "/api/manufacturing/quotes/admin").hasRole("ADMIN")
                 .antMatchers(org.springframework.http.HttpMethod.GET, "/api/support/user").authenticated()
                 .antMatchers(org.springframework.http.HttpMethod.GET, "/api/support", "/api/support/").hasRole("ADMIN")
                 .antMatchers(org.springframework.http.HttpMethod.GET, "/api/support/{id}").authenticated()

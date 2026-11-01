@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 import axios from 'axios';
 
-export default function CheckoutForm({ totalAmount, onPaymentSuccess }) {
+export default function CheckoutForm({ totalAmount, onPaymentSuccess, disabled = false }) {
   const stripe = useStripe();
   const elements = useElements();
   const [message, setMessage] = useState(null);
@@ -11,7 +11,7 @@ export default function CheckoutForm({ totalAmount, onPaymentSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!stripe || !elements) {
+    if (!stripe || !elements || disabled) {
       return;
     }
 
@@ -54,10 +54,10 @@ export default function CheckoutForm({ totalAmount, onPaymentSuccess }) {
       )}
 
       <button
-        disabled={isLoading || !stripe || !elements}
+        disabled={isLoading || !stripe || !elements || disabled}
         className={`w-full btn-pop bg-cedar text-white border-4 border-charcoal px-8 py-5 rounded-[24px] font-black text-xl uppercase tracking-widest ${isLoading ? 'opacity-50' : ''}`}
       >
-        {isLoading ? 'Processing...' : `Pay $${totalAmount.toFixed(2)}`}
+        {isLoading ? 'Processing...' : disabled ? 'Complete Shipping Details' : `Pay $${totalAmount.toFixed(2)}`}
       </button>
     </form>
   );

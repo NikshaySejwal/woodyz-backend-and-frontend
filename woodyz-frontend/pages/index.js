@@ -3,7 +3,7 @@ import CategoryGrid from '../components/CategoryGrid';
 import Bestsellers from '../components/Bestsellers';
 import TrustSection from '../components/TrustSection';
 import Newsletter from '../components/Newsletter';
-import Seo from '../components/Seo';
+import Seo, { siteUrl } from '../components/Seo';
 
 export default function Home() {
   return (
@@ -19,8 +19,8 @@ export default function Home() {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@graph': [
-              { '@type': 'Organization', name: 'WOODYZ', url: 'https://www.woodyz.in/' },
-              { '@type': 'WebSite', name: 'WOODYZ', url: 'https://www.woodyz.in/' },
+              { '@type': 'Organization', name: 'WOODYZ', url: `${siteUrl}/` },
+              { '@type': 'WebSite', name: 'WOODYZ', url: `${siteUrl}/` },
             ],
           }),
         }}

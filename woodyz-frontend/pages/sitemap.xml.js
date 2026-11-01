@@ -1,7 +1,7 @@
 import axios from 'axios';
+import { siteUrl } from '../components/Seo';
 
 export async function getServerSideProps({ res }) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.woodyz.in';
   const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080';
   let products = [];
 
@@ -12,7 +12,7 @@ export async function getServerSideProps({ res }) {
     console.error('Sitemap product fetch failed:', error.message);
   }
 
-  const urls = ['/', '/products', '/privacy-policy', '/terms-and-conditions', '/sitemap', '/ai'];
+  const urls = ['/', '/products', '/privacy-policy', '/terms-and-conditions', '/sitemap', '/ai', '/manufacturing'];
   products.forEach((product) => urls.push(`/products/${product.id}`));
   const body = urls.map((path) => `<url><loc>${siteUrl}${path}</loc></url>`).join('');
   const xml = `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${body}</urlset>`;

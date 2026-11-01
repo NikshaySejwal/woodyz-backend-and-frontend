@@ -6,7 +6,7 @@ import Head from 'next/head';
 import { useCart } from '../../context/CartContext';
 import ProductReviews from '../../components/ProductReviews';
 import api from '../../lib/api';
-import Seo from '../../components/Seo';
+import Seo, { siteUrl } from '../../components/Seo';
 import { resolveAssetUrl } from '../../lib/api';
 
 export default function ProductDetail() {
@@ -94,7 +94,7 @@ export default function ProductDetail() {
               '@type': 'Offer',
               priceCurrency: 'USD',
               price: product.price,
-              url: `https://www.woodyz.in/products/${product.id}`,
+              url: `${siteUrl}/products/${product.id}`,
             },
           }),
         }}

@@ -1,6 +1,6 @@
 import Head from 'next/head';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.woodyz.in';
+export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://woodyz.in').replace(/\/+$/, '');
 const defaultImage = `${siteUrl}/favicon.ico`;
 
 export default function Seo({

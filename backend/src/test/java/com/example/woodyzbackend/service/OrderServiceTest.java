@@ -93,6 +93,38 @@ class OrderServiceTest {
     }
 
     @Test
+    void saveCustomerOrderPersistsSubmittedDeliveryAddress() throws Exception {
+        setUp();
+        Authentication authentication = org.mockito.Mockito.mock(Authentication.class);
+        when(authentication.getName()).thenReturn("customer");
+
+        User customer = new User();
+        customer.setId(42L);
+        customer.setEmail("customer@example.com");
+        customer.setAddress("Profile address");
+        when(userRepository.findByUsername("customer")).thenReturn(customer);
+
+        Product product = new Product();
+        product.setId(9L);
+        product.setPrice(19.95);
+        when(productRepository.findById(9L)).thenReturn(Optional.of(product));
+        when(stripeService.isPaid("pi_shipping", 19.95)).thenReturn(true);
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        CheckoutItemRequest item = new CheckoutItemRequest();
+        item.setProductId(9L);
+        item.setQuantity(1);
+        Order order = new Order();
+        order.setPaymentIntentId("pi_shipping");
+        order.setDeliveryAddress("  Alex Customer, 10 Maple Street, Bengaluru, 560001  ");
+        order.setItems(Collections.singletonList(item));
+
+        Order savedOrder = orderService.saveCustomerOrder(order, authentication);
+
+        assertEquals("Alex Customer, 10 Maple Street, Bengaluru, 560001", savedOrder.getDeliveryAddress());
+    }
+
+    @Test
     void saveCustomerOrderDoesNotPersistWhenPaymentIsUnverified() throws Exception {
         setUp();
         Authentication authentication = org.mockito.Mockito.mock(Authentication.class);

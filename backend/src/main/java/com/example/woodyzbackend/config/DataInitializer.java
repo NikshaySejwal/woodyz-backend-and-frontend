@@ -14,6 +14,9 @@ import com.example.woodyzbackend.repository.ProductRepository;
 @Configuration
 public class DataInitializer {
 
+    @Value("${app.seed-demo-data:false}")
+    private boolean seedDemoData;
+
     @Value("${app.admin.username:}")
     private String adminUsername;
 
@@ -30,7 +33,7 @@ public class DataInitializer {
             OrderStatusHistoryRepository orderHistoryRepository,
             org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         return args -> {
-            if (productRepository.count() == 0) {
+            if (seedDemoData && productRepository.count() == 0) {
                 Product p1 = new Product();
                 p1.setName("Classic Wooden Blocks");
                 p1.setDescription("50-piece set of natural maple blocks in various shapes and sizes.");
@@ -76,7 +79,7 @@ public class DataInitializer {
                 System.out.println("Local admin account created for username: " + adminUsername);
             }
 
-            if (orderRepository.count() == 0) {
+            if (seedDemoData && orderRepository.count() == 0) {
                 com.example.woodyzbackend.entity.Order o1 = new com.example.woodyzbackend.entity.Order();
                 o1.setUserId(1L);
                 o1.setTotalAmount(59.98);

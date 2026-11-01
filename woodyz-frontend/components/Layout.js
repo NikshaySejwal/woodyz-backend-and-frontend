@@ -3,8 +3,12 @@ import AnnouncementBar from './AnnouncementBar';
 import Header from './Header';
 import Footer from './Footer';
 import SupportBubble from './SupportBubble';
+import { useRouter } from 'next/router';
 
 const Layout = ({ children }) => {
+  const { pathname } = useRouter();
+  const isManufacturingPage = pathname === '/manufacturing' || pathname.startsWith('/manufacturing/');
+
   return (
     <div className="relative min-h-screen">
       {/* Grain texture overlay */}
@@ -17,12 +21,12 @@ const Layout = ({ children }) => {
         <link rel="apple-touch-icon" href="/favicon.ico" />
       </Head>
 
-      <AnnouncementBar />
-      <Header />
+      {!isManufacturingPage && <AnnouncementBar />}
+      {!isManufacturingPage && <Header />}
 
       <main>{children}</main>
 
-      <Footer />
+      {!isManufacturingPage && <Footer />}
       <SupportBubble />
     </div>
   );

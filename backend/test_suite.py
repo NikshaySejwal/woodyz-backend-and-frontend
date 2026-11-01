@@ -4,6 +4,7 @@ from datetime import datetime
 from uuid import uuid4
 
 import requests
+from test_suite_safety import target_safety_error
 
 
 BASE_URL = os.getenv("WOODYZ_API_URL", "http://localhost:8080/api").rstrip("/")
@@ -11,6 +12,8 @@ LUCKY_PASSWORD = os.getenv("LUCKY_PASSWORD", "password123")
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "adminpassword")
 RUN_LIVE_PAYMENT = os.getenv("RUN_LIVE_PAYMENT", "0") == "1"
+ALLOW_REMOTE_MUTATIONS = os.getenv("WOODYZ_ALLOW_REMOTE_MUTATIONS", "0") == "1"
+ALLOW_LIVE_PAYMENT = os.getenv("WOODYZ_ALLOW_LIVE_PAYMENT", "0") == "1"
 
 LUCKY_USER = {
     "username": "lucky",
@@ -175,4 +178,8 @@ def run_tests():
 
 
 if __name__ == "__main__":
+    safety_error = target_safety_error(BASE_URL, ALLOW_REMOTE_MUTATIONS, RUN_LIVE_PAYMENT, ALLOW_LIVE_PAYMENT)
+    if safety_error:
+        print(f"[BLOCK] {safety_error}")
+        sys.exit(2)
     sys.exit(run_tests())

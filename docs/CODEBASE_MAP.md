@@ -2,7 +2,7 @@
 
 ## 1. Project Overview
 
-WOODYZ is an e-commerce application for wooden products. The repository contains a Next.js Pages Router frontend and a Spring Boot REST backend. PostgreSQL is used by Docker Compose, Redis is configured for caching, Stripe is used for payment intents, and SendGrid is configured for email.
+WOODYZ contains two connected but visually distinct experiences: WOODYZ Toys, a B2C wooden-toy storefront, and WOODYZ Manufacturing, a B2B custom-fabrication and bulk-order experience. The repository contains a Next.js Pages Router frontend and a Spring Boot REST backend. PostgreSQL is used by Docker Compose, Redis is configured for caching, Stripe is used for payment intents, and SendGrid is configured for email.
 
 Entry points:
 
@@ -60,8 +60,10 @@ woodyz-frontend/
 - `pages/orders.js`: authenticated order history.
 - `pages/profile.js`: authenticated profile.
 - `pages/track/[id].js`: order tracking.
+- `pages/manufacturing/index.js`: separate B2B manufacturing capabilities and public quote form at `/manufacturing`.
 - `pages/auth/login.js`, `pages/auth/register.js`: authentication forms.
 - `pages/admin/*`: admin dashboard pages.
+- `pages/admin/manufacturing-quotes.js`: ADMIN-only quote inbox at `/admin/manufacturing-quotes`.
 - `components/Seo.js`: shared title, description, canonical, robots, Open Graph, and Twitter metadata.
 - `components/CookieConsent.js`: localStorage-based consent banner.
 - `context/AuthContext.js`: client auth state and token storage.
@@ -77,14 +79,20 @@ woodyz-frontend/
 - `controller/PaymentController.java`: authenticated Stripe payment-intent endpoint with product-repository pricing and required UUID `Idempotency-Key`, plus a signed public webhook receiver.
 - `controller/ReviewController.java`: product review endpoints.
 - `controller/SupportTicketController.java`: support ticket endpoints.
+- `controller/ManufacturingQuoteRequestController.java`: public validated quote submission and ADMIN-only listing.
+- `dto/ManufacturingQuoteRequestCreateDTO.java`: public submission allow-list and bean validation; clients cannot set entity/server-owned fields.
+- `dto/ManufacturingQuoteSubmissionResponseDTO.java`: safe public submission receipt.
+- `dto/ManufacturingQuoteResponseDTO.java`: full quote details for the protected admin listing only.
+- `repository/ManufacturingQuoteRequestRepository.java`: latest-50 descending query.
 - `service/OrderService.java`: server-side total calculation, payment verification, PaymentIntent retry deduplication, order persistence, history, and confirmation email.
 - `service/StripeService.java`: Stripe payment-intent creation with request idempotency, status/amount verification, and webhook signature verification.
 - `service/StripeWebhookService.java`: persists verified Stripe webhook event IDs once for replay deduplication; it does not drive fulfillment.
 - `service/EmailService.java`: email integration.
+- `service/ManufacturingQuoteRequestService.java`: normalizes submissions, sets server-owned fields, persists requests, and loads latest 50.
 - `config/SecurityConfig.java`: JWT/stateless security and route rules.
 - `security/JwtAuthenticationFilter.java`: bearer token authentication.
 - `security/JwtTokenProvider.java`: token creation and validation.
-- `entity/*.java`: User, Product, Order, OrderStatusHistory, StripeWebhookEvent, Review, and SupportTicket tables.
+- `entity/*.java`: User, Product, Order, OrderStatusHistory, StripeWebhookEvent, Review, SupportTicket, and ManufacturingQuoteRequest tables.
 - `repository/*.java`: Spring Data access interfaces, including PaymentIntent lookup and Stripe event replay deduplication.
 - `src/main/resources/application.properties`: environment-backed configuration with required production secrets.
 
@@ -101,10 +109,14 @@ woodyz-frontend/
 - `POST /api/reviews/`: currently public submission.
 - `GET|POST|PUT /api/support`: mixed public/user/admin access; requires validation and ownership review.
 - `GET /api/analytics/summary`: admin-only route.
+- `POST /api/manufacturing/quotes`: public validated submission; `201` receipt contains only `id`, `status`, and `createdAt`.
+- `GET /api/manufacturing/quotes/admin`: `ROLE_ADMIN` only; returns up to 50 newest requests with contact and project details.
+
+Quote submission requires `name`, `email`, `phone`, `productType`, `quantity`, and `message`; `company`, `requiredDeliveryDate`, `materialPreference`, and `processPreference` are optional. `id`, `status`, and `createdAt` are server-controlled. The MVP has no upload, notification, payment, or order-creation flow.
 
 ## 6. Data Model
 
-The entities use scalar IDs rather than JPA relationships. `Order.userId`, `Review.userId`, `Review.productId`, `SupportTicket.userId`, and `OrderStatusHistory.orderId` are application-level references. There is no separate Category or OrderItem entity. Product categories are strings.
+The entities use scalar IDs rather than JPA relationships. `Order.userId`, `Review.userId`, `Review.productId`, `SupportTicket.userId`, and `OrderStatusHistory.orderId` are application-level references. `ManufacturingQuoteRequest` maps contact, product scope, quantity, optional preferences/date, message, `NEW` status, and creation time to `manufacturing_quote_requests`. There is no separate Category or OrderItem entity. Product categories are strings.
 
 ## 7. Authentication
 
@@ -138,8 +150,8 @@ Never place real values in this document.
 ## 9. Testing and Verification
 
 - Frontend production build has previously passed with `npm run build`.
-- GitHub Actions runs `mvn -B -f backend/pom.xml verify` with Java 21 before publishing images.
-- Thirteen backend unit tests currently cover order pricing/identity, payment rejection, PaymentIntent retry ownership, request idempotency keys, webhook signature verification, webhook event deduplication, and controller input handling. Broader auth, database integration, and fulfillment coverage is still needed.
+- GitHub Actions runs `mvn -B -f backend/pom.xml verify` with Java 25 before publishing images; the backend remains compiled for Java 21 bytecode compatibility.
+- Twenty-five backend tests passed on 2026-10-21, including quote validation/security MVC coverage and existing checkout/payment tests. Five manufacturing quote frontend validation tests also passed. Production PostgreSQL migration, abuse, fulfillment, and browser accessibility coverage remains needed.
 - The backend Docker build uses `-DskipTests`; CI verification runs separately.
 - `orders.payment_intent_id` and Stripe webhook event IDs are unique at the database level. Check for pre-existing duplicate PaymentIntent IDs before deploying the schema change. Webhook events are audit/replay receipts only; they do not confirm or create orders.
 - CI publishes backend and frontend Docker images tagged with both `latest` and the commit SHA. Image deployment/selection is not wired into Compose.

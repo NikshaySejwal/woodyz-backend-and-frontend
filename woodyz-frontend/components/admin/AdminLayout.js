@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { href: '/admin', key: 'inventory', icon: 'ph:cube-bold', label: 'Inventory' },
   { href: '/admin/analytics', key: 'analytics', icon: 'ph:chart-line-up-bold', label: 'Analytics' },
   { href: '/admin/support', key: 'support', icon: 'ph:chat-circle-dots-bold', label: 'Support' },
+  { href: '/admin/manufacturing-quotes', key: 'manufacturing-quotes', icon: 'ph:factory-bold', label: 'Manufacturing Quotes' },
   { href: '/admin/users', key: 'users', icon: 'ph:users-bold', label: 'Users' },
   { href: '/admin/coupons', key: 'coupons', icon: 'ph:ticket-bold', label: 'Coupons' },
   { href: '/admin/config', key: 'config', icon: 'ph:gear-bold', label: 'Config' },

@@ -87,6 +87,31 @@ ProductReviews/SupportBubble
 
 Known risk: anonymous submission routes exist and require validation, rate limiting, moderation, and ownership review.
 
+### Manufacturing quote requests
+
+```text
+pages/manufacturing/index.js
+  -> manufacturingQuoteValidation.mjs
+  -> lib/api.js
+  -> POST /api/manufacturing/quotes (public)
+  -> SecurityConfig explicit public POST matcher
+  -> ManufacturingQuoteRequestController (@Valid request DTO)
+  -> ManufacturingQuoteRequestService (sets NEW and createdAt)
+  -> ManufacturingQuoteRequestRepository
+  -> manufacturing_quote_requests table
+  -> restricted receipt: id/status/createdAt
+
+pages/admin/manufacturing-quotes.js
+  -> useAuthGuard(requiredRole ADMIN)
+  -> lib/api.js bearer token
+  -> GET /api/manufacturing/quotes/admin
+  -> SecurityConfig hasRole("ADMIN") matcher
+  -> controller/service/repository (latest 50, createdAt descending)
+  -> full admin quote response
+```
+
+Quote submissions are lead requests only; there are no payment, checkout, inventory, or order side effects. The admin response contains personal contact and project data and must remain role-protected. Rate limiting, pagination, retention policy, and admin status editing are follow-up work, outside this MVP.
+
 ## Cross-Cutting Dependencies
 
 - `_app.js` composes global providers/layout and is a high-impact frontend file.

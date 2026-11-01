@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import { siteUrl } from '../components/Seo';
 
 const sections = [
   ['Website use', 'Use this website lawfully and do not interfere with its operation, attempt unauthorized access, or misuse another person’s account.'],
@@ -20,10 +21,10 @@ export default function TermsAndConditions() {
       <Head>
         <title>Terms and Conditions | WOODYZ</title>
         <meta name="description" content="Review the website, account, product, order, payment, shipping, and return terms for WOODYZ." />
-        <link rel="canonical" href="https://www.woodyz.in/terms-and-conditions" />
+        <link rel="canonical" href={`${siteUrl}/terms-and-conditions`} />
         <meta property="og:title" content="Terms and Conditions | WOODYZ" />
         <meta property="og:description" content="Website and shopping terms for WOODYZ." />
-        <meta property="og:url" content="https://www.woodyz.in/terms-and-conditions" />
+        <meta property="og:url" content={`${siteUrl}/terms-and-conditions`} />
         <meta name="twitter:card" content="summary" />
       </Head>
       <section className="py-16 px-6">

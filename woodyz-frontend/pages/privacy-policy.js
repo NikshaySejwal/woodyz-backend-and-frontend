@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import { siteUrl } from '../components/Seo';
 
 const sections = [
   ['Information we collect', 'WOODYZ may collect information you provide when you create an account, place an order, contact support, submit a review, or subscribe to updates. This can include your name, email address, shipping details, account credentials, order details, and the content of your messages.'],
@@ -18,10 +19,10 @@ export default function PrivacyPolicy() {
       <Head>
         <title>Privacy Policy | WOODYZ</title>
         <meta name="description" content="Read how WOODYZ handles account, order, payment, cookie, and contact information." />
-        <link rel="canonical" href="https://www.woodyz.in/privacy-policy" />
+        <link rel="canonical" href={`${siteUrl}/privacy-policy`} />
         <meta property="og:title" content="Privacy Policy | WOODYZ" />
         <meta property="og:description" content="How WOODYZ handles personal information and essential site storage." />
-        <meta property="og:url" content="https://www.woodyz.in/privacy-policy" />
+        <meta property="og:url" content={`${siteUrl}/privacy-policy`} />
         <meta name="twitter:card" content="summary" />
       </Head>
       <section className="py-16 px-6">

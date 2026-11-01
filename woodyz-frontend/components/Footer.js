@@ -47,6 +47,7 @@ const Footer = () => {
             <ul className="space-y-4 font-black text-sm uppercase tracking-widest list-none p-0">
               <li><Link href="/ai" id="foot-story-1" className="hover:text-cedar text-charcoal no-underline">Sustainability</Link></li>
               <li><Link href="/ai" id="foot-story-2" className="hover:text-cedar text-charcoal no-underline">Craftsmanship</Link></li>
+              <li><Link href="/manufacturing" id="foot-story-manufacturing" className="hover:text-cedar text-charcoal no-underline">Custom manufacturing</Link></li>
               <li><Link href="/privacy-policy" id="foot-story-3" className="hover:text-cedar text-charcoal no-underline">Safety & Privacy</Link></li>
               <li><Link href="/sitemap" id="foot-story-4" className="hover:text-cedar text-charcoal no-underline">Site Map</Link></li>
               <li><Link href="/terms-and-conditions" id="foot-story-5" className="hover:text-cedar text-charcoal no-underline">Terms</Link></li>

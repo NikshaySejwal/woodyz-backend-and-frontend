@@ -1,4 +1,4 @@
-name: Build and Deploy Docker Image
+name: Verify and Publish Docker Images
 
 on:
   push:
@@ -14,15 +14,55 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Java 21
+      - name: Validate production frontend settings
+        env:
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+        run: |
+          if [ -z "$NEXT_PUBLIC_API_URL" ] || [ -z "$NEXT_PUBLIC_SITE_URL" ] || [ -z "$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY" ]; then
+            echo "Set NEXT_PUBLIC_API_URL, NEXT_PUBLIC_SITE_URL, and NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as repository variables."
+            exit 1
+          fi
+          node -e 'for (const name of ["NEXT_PUBLIC_API_URL", "NEXT_PUBLIC_SITE_URL"]) { const u = new URL(process.env[name]); if (u.protocol !== "https:") { console.error(`${name} must use HTTPS`); process.exit(1); } } if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.startsWith("pk_live_")) { console.error("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY must be a live Stripe publishable key for production images"); process.exit(1); }'
+
+      - name: Set up Java 25
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: "25"
           cache: maven
 
       - name: Verify backend
         run: mvn -B -f backend/pom.xml verify
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Test manual QA runner safety
+        run: python -m unittest test_suite_safety_test
+        working-directory: backend
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: woodyz-frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: woodyz-frontend
+
+      - name: Audit production frontend dependencies
+        run: npm audit --omit=dev
+        working-directory: woodyz-frontend
+
+      - name: Test Manufacturing quote form validation
+        run: npm run test:manufacturing-quote
+        working-directory: woodyz-frontend
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -37,6 +77,10 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./woodyz-frontend
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}
+            NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ vars.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/woodyz-frontend:latest

@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import { siteUrl } from '../components/Seo';
 
 export default function AiInformation() {
   return (
@@ -7,10 +8,10 @@ export default function AiInformation() {
       <Head>
         <title>About WOODYZ | Public Brand Information</title>
         <meta name="description" content="Authoritative public information about WOODYZ, its wooden product collection, and public policies." />
-        <link rel="canonical" href="https://www.woodyz.in/ai" />
+        <link rel="canonical" href={`${siteUrl}/ai`} />
         <meta property="og:title" content="About WOODYZ | Public Brand Information" />
         <meta property="og:description" content="Public brand and product information for WOODYZ." />
-        <meta property="og:url" content="https://www.woodyz.in/ai" />
+        <meta property="og:url" content={`${siteUrl}/ai`} />
         <meta name="twitter:card" content="summary" />
       </Head>
       <section className="py-16 px-6">

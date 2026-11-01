@@ -1,13 +1,15 @@
 # Environment Configuration
 
-Based on the project structure and configuration files (`docker-compose.yml`, `.env.example`), this document outlines the environment setups.
+Based on the project structure and `docker-compose.yml`, this document outlines the environment setup.
 
 ## Services & Dependencies
 
 - **Database**: PostgreSQL (image: `postgres:15-alpine`)
-- **Cache/Session**: Redis (image: `redis:7-alpine`)
-- **Backend**: Spring Boot (Java 21, Maven)
+- **Cache**: Redis is present in local Compose; Spring's configured default cache is in-memory `simple`. Verify whether Redis is needed before adding a separate hosted Redis service.
+- **Backend**: Spring Boot (Java 25 runtime, Java 21 bytecode target, Maven)
 - **Frontend**: Next.js (Node 20)
+
+The separate Manufacturing B2B route (`/manufacturing`) is served by the same frontend app and uses the same backend base URL. Its admin inbox uses existing JWT authentication and ADMIN role configuration.
 
 ## Environment Variables
 
@@ -20,25 +22,36 @@ Configured in `docker-compose.yml`:
 - `STRIPE_API_KEY`: Required. For payment processing.
 - `STRIPE_WEBHOOK_SECRET`: Optional for local runs; required to enable signed Stripe webhook processing.
 - `SENDGRID_API_KEY`: Required. For email services.
+- `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_EMAIL`: Optional first-run ADMIN bootstrap values. Use a unique username and strong password from the provider secret store; remove the bootstrap password after the account is created.
+- `APP_SEED_DEMO_DATA`: Defaults to `false`. Set to `true` only for a local/demo database to insert the sample catalog and fake shipped order.
 - `FRONTEND_ORIGIN`: Defaults to `http://localhost:3000`.
 - Spring/DB config variables (`SPRING_DATASOURCE_*`, `SPRING_REDIS_*`).
 - `SPRING_JPA_HIBERNATE_DDL_AUTO`: Set to `update`.
+- `SPRING_JPA_SHOW_SQL`: Defaults to `false` to avoid noisy SQL output in production logs; enable only for local diagnosis.
+- The quote entity adds `manufacturing_quote_requests`; production schema creation has not been verified and requires backup/review.
 
 ### Frontend
 
-Configured in `docker-compose.yml` and `.env.example`:
+Configured in `docker-compose.yml`. The repository does not contain an `.env.example` template. Use an uncommitted `.env.production` file for local Compose or enter these values in the appropriate Railway service's Variables page; use private service references for the production database.
 
-- `NEXT_PUBLIC_API_URL`: Backend API URL (default: `http://localhost:8080`).
-- `NEXT_PUBLIC_SITE_URL`: Frontend public URL (e.g., `https://www.woodyz.in`).
+- `NEXT_PUBLIC_API_URL`: Backend API URL, compiled into the frontend image at build time. `http://localhost:8080` is a local-development default only; production is expected to use `https://api.woodyz.in`, pending owner confirmation and domain setup.
+- `NEXT_PUBLIC_SITE_URL`: Frontend public URL. The owner confirmed `https://woodyz.in` as canonical; if GoDaddy DNS cannot connect the apex to Railway, decide whether to use `https://www.woodyz.in` and forward the apex before production builds.
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: Stripe publishable key.
-- `BACKEND_URL`: Internal Docker network URL (`http://backend:8080`).
+- `BACKEND_URL`: Server-side frontend-to-backend target. It is `http://backend:8080` in local Compose; on Railway, set it to the backend's private service URL.
+- `BACKEND_IMAGE`, `FRONTEND_IMAGE`: Optional image references; local defaults build from source under `woodyz-backend:local` and `woodyz-frontend:local`.
+
+For GitHub Actions production image builds, configure repository variables `NEXT_PUBLIC_API_URL` (public HTTPS API origin), `NEXT_PUBLIC_SITE_URL` (public HTTPS storefront origin), and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (live `pk_live_` key). These values are compiled into the frontend, and the API origin is added to the Content Security Policy. The image workflow fails if the values are missing or do not pass the production checks.
+
+The public Manufacturing form does not require authentication. Its admin inbox requires the existing bearer JWT and ADMIN role. No quote-specific environment variable is added.
 
 Checkout sends a required UUID `Idempotency-Key` request header when creating a PaymentIntent. The browser retains the key per authenticated user/cart in `sessionStorage` so retrying the same cart reuses the same Stripe request identity.
 
 ## Environment Differences
 
-- **Local/Development**: Managed entirely via `docker-compose.yml` which builds images from local source and mounts local volumes (e.g., `./data/uploads:/app/data/uploads`).
-- **Production/Staging**: **UNKNOWN / NEEDS CONFIRMATION**. There is no explicit staging or production configuration file present. The `deploy.yml` GitHub Action builds and pushes backend and frontend images tagged with `latest` and the commit SHA, but does not deploy them. How images are selected and instantiated in production is unknown.
+- **Local/Development**: Managed entirely via `docker-compose.yml` which builds images from local source and mounts local volumes (e.g., `./data/uploads:/app/data/uploads`). PostgreSQL and Redis host ports bind to loopback only, and backend startup waits for both services' health checks.
+- **Self-managed Compose image selection**: Set `BACKEND_IMAGE` and `FRONTEND_IMAGE` in the uncommitted `.env.production` file to the same reviewed commit SHA tags, then run `docker compose --env-file .env.production pull` and `docker compose --env-file .env.production up -d --no-build`. This is the existing VM/Compose path, not the recommended Railway setup.
+- **Production origin/security wiring**: The CI frontend build uses `NEXT_PUBLIC_API_URL` to add the API origin to the Content Security Policy. The backend uses `FRONTEND_ORIGIN` for CORS. These must match the selected public API and site origins; setting only runtime `BACKEND_URL` does not change browser API requests or the compiled CSP.
+- **Production/Staging**: **NOT CONFIGURED**. GoDaddy is the registrar and `https://woodyz.in` is the confirmed site origin. Railway Pro is recommended but not provisioned. `api.woodyz.in`, authoritative DNS records, service region, production variables, and backup settings remain unconfirmed. GitHub Actions publishes Docker Hub images but does not deploy them; Railway can build each Dockerfile from the connected repository.
 
 ## Secrets Handling
 
@@ -47,4 +60,4 @@ Secrets are passed as environment variables. The `docker-compose.yml` enforces t
 ## Verified vs Unknown
 
 - **Verified**: Local development dependencies, required secrets, frontend/backend environment variable names.
-- **Unknown**: Production infrastructure (AWS, DigitalOcean, etc.), production SSL/TLS termination, secrets manager (if any) used in production.
+- **Unknown**: Railway account and monthly budget, service region, public API domain, authoritative GoDaddy nameservers, root-domain compatibility, production variables, database backups, and deployment operator. Railway HTTPS setup and public runtime have not been tested.

@@ -25,7 +25,27 @@ export default function Checkout() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [clientSecret, setClientSecret] = useState("");
+  const [shipping, setShipping] = useState({ firstName: '', lastName: '', address: '', city: '', zip: '' });
   const router = useRouter();
+
+  const updateShipping = (event) => {
+    const { id, value } = event.target;
+    const field = {
+      'checkout-first-name': 'firstName',
+      'checkout-last-name': 'lastName',
+      'checkout-address': 'address',
+      'checkout-city': 'city',
+      'checkout-zip': 'zip',
+    }[id];
+    if (field) setShipping((current) => ({ ...current, [field]: value }));
+  };
+
+  const shippingComplete = Object.values(shipping).every((value) => value.trim().length > 0);
+  const deliveryAddress = [
+    `${shipping.firstName.trim()} ${shipping.lastName.trim()}`.trim(),
+    shipping.address.trim(),
+    `${shipping.city.trim()}, ${shipping.zip.trim()}`,
+  ].filter(Boolean).join(', ');
 
   // Reuse the same Stripe request key when this cart is retried in the session.
   useEffect(() => {
@@ -57,9 +77,15 @@ export default function Checkout() {
   if (!isLoaded) return null;
 
   const handleOrderCompletion = async (paymentIntentId) => {
+    if (!shippingComplete) {
+      alert('Please complete your shipping details before paying.');
+      return;
+    }
+
     try {
       await api.post('/api/orders/', {
         paymentIntentId,
+        deliveryAddress,
         items: cartItems.map((item) => ({ productId: item.id, quantity: item.quantity }))
       });
       const cartFingerprint = getCartFingerprint(cartItems);
@@ -100,16 +126,17 @@ export default function Checkout() {
                     <iconify-icon icon="ph:truck-bold" class="text-cedar"></iconify-icon>
                     Shipping Details
                   </h2>
-                  <form className="space-y-6">
+                  <form className="space-y-6" onSubmit={(event) => event.preventDefault()}>
                     <div className="grid grid-cols-2 gap-6">
-                      <FormField label="First Name" id="checkout-first-name" required />
-                      <FormField label="Last Name" id="checkout-last-name" required />
+                      <FormField label="First Name" id="checkout-first-name" value={shipping.firstName} onChange={updateShipping} required />
+                      <FormField label="Last Name" id="checkout-last-name" value={shipping.lastName} onChange={updateShipping} required />
                     </div>
-                    <FormField label="Address" id="checkout-address" required />
+                    <FormField label="Address" id="checkout-address" value={shipping.address} onChange={updateShipping} required />
                     <div className="grid grid-cols-2 gap-6">
-                      <FormField label="City" id="checkout-city" required />
-                      <FormField label="ZIP Code" id="checkout-zip" required />
+                      <FormField label="City" id="checkout-city" value={shipping.city} onChange={updateShipping} required />
+                      <FormField label="ZIP Code" id="checkout-zip" value={shipping.zip} onChange={updateShipping} required />
                     </div>
+                    {!shippingComplete && <p className="text-sm font-bold text-charcoal/50">Complete every shipping field before confirming payment.</p>}
                   </form>
                 </div>
               </div>
@@ -124,7 +151,7 @@ export default function Checkout() {
                   
                   {clientSecret ? (
                     <Elements stripe={stripePromise} options={{ clientSecret }}>
-                      <CheckoutForm totalAmount={cartTotal} onPaymentSuccess={handleOrderCompletion} />
+                      <CheckoutForm totalAmount={cartTotal} onPaymentSuccess={handleOrderCompletion} disabled={!shippingComplete} />
                     </Elements>
                   ) : (
                     <div className="animate-pulse flex flex-col items-center py-8">

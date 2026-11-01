@@ -81,7 +81,13 @@ public class OrderService {
         order.setId(null);
         order.setUserId(currentUser.getId());
         order.setCustomerEmail(currentUser.getEmail());
-        order.setDeliveryAddress(currentUser.getAddress());
+        String submittedDeliveryAddress = order.getDeliveryAddress() == null
+                ? "" : order.getDeliveryAddress().trim();
+        if (submittedDeliveryAddress.length() > 500) {
+            throw new IllegalArgumentException("Delivery address is too long");
+        }
+        order.setDeliveryAddress(submittedDeliveryAddress.isEmpty()
+                ? currentUser.getAddress() : submittedDeliveryAddress);
         if (order.getPaymentIntentId() == null || order.getItems() == null || order.getItems().isEmpty()) {
             throw new IllegalArgumentException("A verified payment and cart items are required");
         }

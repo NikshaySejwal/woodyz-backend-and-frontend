@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import axios from 'axios';
+import { siteUrl } from '../components/Seo';
 
 export async function getServerSideProps() {
   const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080';
@@ -20,10 +21,10 @@ export default function Sitemap({ products }) {
       <Head>
         <title>Site Map | WOODYZ</title>
         <meta name="description" content="Browse the public WOODYZ site map, product collection, and policies." />
-        <link rel="canonical" href="https://www.woodyz.in/sitemap" />
+        <link rel="canonical" href={`${siteUrl}/sitemap`} />
         <meta property="og:title" content="Site Map | WOODYZ" />
         <meta property="og:description" content="Public WOODYZ pages and product links." />
-        <meta property="og:url" content="https://www.woodyz.in/sitemap" />
+        <meta property="og:url" content={`${siteUrl}/sitemap`} />
       </Head>
       <section className="py-16 px-6">
         <div className="max-w-5xl mx-auto">
