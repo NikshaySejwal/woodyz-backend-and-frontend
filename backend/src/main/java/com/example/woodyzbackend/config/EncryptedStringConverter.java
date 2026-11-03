@@ -19,16 +19,21 @@ public class EncryptedStringConverter implements AttributeConverter<String, Stri
     private static final int IV_LENGTH = 12;
     private static final int TAG_LENGTH = 128;
     private static final SecureRandom RANDOM = new SecureRandom();
+    private final SecretKeySpec key;
 
-    private SecretKeySpec key() {
-        String configured = System.getenv("SUPPORT_ENCRYPTION_KEY");
-        String value = configured == null || configured.isBlank()
-                ? "local-development-support-key"
-                : configured;
+    public EncryptedStringConverter() {
+        this(System.getenv("SUPPORT_ENCRYPTION_KEY"));
+    }
+
+    EncryptedStringConverter(String configured) {
+        if (configured == null || configured.isBlank()
+                || configured.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("SUPPORT_ENCRYPTION_KEY must be configured with at least 32 bytes");
+        }
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256")
-                    .digest(value.getBytes(StandardCharsets.UTF_8));
-            return new SecretKeySpec(digest, "AES");
+                    .digest(configured.getBytes(StandardCharsets.UTF_8));
+            this.key = new SecretKeySpec(digest, "AES");
         } catch (GeneralSecurityException exception) {
             throw new IllegalStateException("Unable to initialize support message encryption", exception);
         }
@@ -43,7 +48,7 @@ public class EncryptedStringConverter implements AttributeConverter<String, Stri
             byte[] iv = new byte[IV_LENGTH];
             RANDOM.nextBytes(iv);
             Cipher cipher = Cipher.getInstance(ALGORITHM);
-            cipher.init(Cipher.ENCRYPT_MODE, key(), new GCMParameterSpec(TAG_LENGTH, iv));
+            cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(TAG_LENGTH, iv));
             byte[] encrypted = cipher.doFinal(value.getBytes(StandardCharsets.UTF_8));
             byte[] combined = new byte[iv.length + encrypted.length];
             System.arraycopy(iv, 0, combined, 0, iv.length);
@@ -64,7 +69,7 @@ public class EncryptedStringConverter implements AttributeConverter<String, Stri
             byte[] iv = java.util.Arrays.copyOfRange(combined, 0, IV_LENGTH);
             byte[] encrypted = java.util.Arrays.copyOfRange(combined, IV_LENGTH, combined.length);
             Cipher cipher = Cipher.getInstance(ALGORITHM);
-            cipher.init(Cipher.DECRYPT_MODE, key(), new GCMParameterSpec(TAG_LENGTH, iv));
+            cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(TAG_LENGTH, iv));
             return new String(cipher.doFinal(encrypted), StandardCharsets.UTF_8);
         } catch (IllegalArgumentException exception) {
             return value;

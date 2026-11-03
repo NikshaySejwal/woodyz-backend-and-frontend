@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.woodyzbackend.dto.SupportTicketCreateRequestDTO;
 import com.example.woodyzbackend.entity.SupportTicket;
 import com.example.woodyzbackend.entity.User;
 import com.example.woodyzbackend.service.SupportTicketService;
@@ -83,12 +84,16 @@ public class SupportTicketController {
      * @return A `ResponseEntity` containing the created `SupportTicket`.
      */
     @PostMapping({"", "/"})
-    public ResponseEntity<SupportTicket> createTicket(@RequestBody SupportTicket ticket) {
+    public ResponseEntity<SupportTicket> createTicket(@RequestBody SupportTicketCreateRequestDTO request) {
+        SupportTicket ticket = new SupportTicket();
+        ticket.setSubject(request.getSubject());
+        ticket.setMessage(request.getMessage());
         User currentUser = userService.getCurrentUser();
         if (currentUser != null) {
             ticket.setUserId(currentUser.getId());
             ticket.setUsername(currentUser.getUsername());
         } else {
+            ticket.setUserId(null);
             ticket.setUsername("Guest Explorer");
         }
         return ResponseEntity.ok(supportTicketService.saveTicket(ticket));

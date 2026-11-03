@@ -1,12 +1,14 @@
 package com.example.woodyzbackend.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
 class EncryptedStringConverterTest {
 
-    private final EncryptedStringConverter converter = new EncryptedStringConverter();
+    private static final String TEST_KEY = "test-support-encryption-key-with-at-least-32-bytes";
+    private final EncryptedStringConverter converter = new EncryptedStringConverter(TEST_KEY);
 
     @Test
     void readsLegacyPlaintextSupportMessages() {
@@ -20,5 +22,11 @@ class EncryptedStringConverterTest {
         String message = "A new support reply";
 
         assertEquals(message, converter.convertToEntityAttribute(converter.convertToDatabaseColumn(message)));
+    }
+
+    @Test
+    void refusesMissingOrWeakEncryptionKeys() {
+        assertThrows(IllegalStateException.class, () -> new EncryptedStringConverter(null));
+        assertThrows(IllegalStateException.class, () -> new EncryptedStringConverter("short"));
     }
 }

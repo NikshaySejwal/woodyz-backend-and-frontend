@@ -19,6 +19,7 @@ Configured in `docker-compose.yml`:
 
 - `POSTGRES_PASSWORD`: Required.
 - `APP_JWT_SECRET`: Required. For JSON Web Token signing.
+- `SUPPORT_ENCRYPTION_KEY`: Required. Use a secret-managed, random value of at least 32 bytes for support-message encryption. Existing messages encrypted with the previous development fallback must be migrated before deploying this requirement.
 - `STRIPE_API_KEY`: Required. For payment processing.
 - `STRIPE_WEBHOOK_SECRET`: Optional for local runs; required to enable signed Stripe webhook processing.
 - `SENDGRID_API_KEY`: Required. For email services.
@@ -55,7 +56,7 @@ Checkout sends a required UUID `Idempotency-Key` request header when creating a 
 
 ## Secrets Handling
 
-Secrets are passed as environment variables. The `docker-compose.yml` enforces that critical secrets like `POSTGRES_PASSWORD`, `APP_JWT_SECRET`, `STRIPE_API_KEY`, and `SENDGRID_API_KEY` must be set in the host environment before running. `STRIPE_WEBHOOK_SECRET` is optional at startup; the webhook endpoint returns 503 until it is configured.
+Secrets are passed as environment variables. The `docker-compose.yml` enforces that critical secrets like `POSTGRES_PASSWORD`, `APP_JWT_SECRET`, `SUPPORT_ENCRYPTION_KEY`, `STRIPE_API_KEY`, and `SENDGRID_API_KEY` must be set in the host environment before running. `STRIPE_WEBHOOK_SECRET` is optional at startup; the webhook endpoint returns 503 until it is configured.
 
 ## Verified vs Unknown
 

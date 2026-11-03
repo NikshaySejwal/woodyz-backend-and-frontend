@@ -47,3 +47,5 @@ woodyz-frontend/*.tsbuildinfo
 
 # Local secrets and certificates
 **/*.pem
+.neon
+node_modules/
