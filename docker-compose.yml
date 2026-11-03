@@ -6,10 +6,13 @@ services:
       POSTGRES_DB: woodyz
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD must be set}
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./backend/db/postgres/init-create-app-role.sh:/docker-entrypoint-initdb.d/10-create-app-role.sh:ro
+      - ./backend/db/postgres/create-app-role.sql:/docker-entrypoint-initdb.d/create-app-role.sql.in:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d woodyz"]
       interval: 5s
@@ -38,8 +41,8 @@ services:
       - "127.0.0.1:8080:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/woodyz
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      SPRING_DATASOURCE_USERNAME: woodyz_app
+      SPRING_DATASOURCE_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD must be set}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
@@ -48,6 +51,10 @@ services:
       SPRING_REDIS_PORT: 6379
       APP_JWT_SECRET: ${APP_JWT_SECRET:?APP_JWT_SECRET must be set}
       SUPPORT_ENCRYPTION_KEY: ${SUPPORT_ENCRYPTION_KEY:?SUPPORT_ENCRYPTION_KEY must be set}
+      APP_RLS_ENABLED: "true"
+      APP_RATE_LIMIT_ENABLED: "true"
+      APP_REQUIRE_HTTPS: ${APP_REQUIRE_HTTPS:-false}
+      APP_CORS_ALLOW_HTTP_LOCALHOST: ${APP_CORS_ALLOW_HTTP_LOCALHOST:-true}
       STRIPE_API_KEY: ${STRIPE_API_KEY:?STRIPE_API_KEY must be set}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       SENDGRID_API_KEY: ${SENDGRID_API_KEY:?SENDGRID_API_KEY must be set}

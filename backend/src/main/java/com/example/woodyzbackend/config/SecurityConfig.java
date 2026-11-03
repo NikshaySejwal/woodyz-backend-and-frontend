@@ -12,8 +12,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 
 import com.example.woodyzbackend.security.JwtAuthenticationFilter;
+import com.example.woodyzbackend.security.AdminAuditFilter;
+import com.example.woodyzbackend.security.RateLimitFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -36,7 +40,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http,
+            @Value("${app.security.require-https:true}") boolean requireHttps,
+            RateLimitFilter rateLimitFilter, AdminAuditFilter adminAuditFilter) throws Exception {
         http.cors().and().csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
                 .headers(headers -> headers
@@ -45,6 +51,14 @@ public class SecurityConfig {
                 .preload(true)
                 .maxAgeInSeconds(31536000))
                 .frameOptions(frameOptions -> frameOptions.deny())
+                .contentTypeOptions()
+                .and()
+                .addHeaderWriter(new org.springframework.security.web.header.writers.StaticHeadersWriter(
+                        "Permissions-Policy", "camera=(), microphone=(), geolocation=()"))
+                .referrerPolicy(referrer -> referrer.policy(
+                        org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
+                .contentSecurityPolicy(csp -> csp.policyDirectives(
+                        "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"))
                 )
                 .authorizeRequests()
                 .antMatchers("/api/auth/**").permitAll()
@@ -79,7 +93,45 @@ public class SecurityConfig {
                 .anyRequest().authenticated();
 
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterAfter(rateLimitFilter, JwtAuthenticationFilter.class);
+        http.addFilterAfter(adminAuditFilter, RateLimitFilter.class);
+        if (requireHttps) {
+            http.requiresChannel().anyRequest().requiresSecure();
+        }
 
         return http.build();
+    }
+
+    @Bean
+    public RateLimitFilter rateLimitFilter(org.springframework.data.redis.core.StringRedisTemplate redisTemplate,
+            @Value("${app.rate-limit.enabled:true}") boolean enabled) {
+        return new RateLimitFilter(redisTemplate, enabled);
+    }
+
+    @Bean
+    public AdminAuditFilter adminAuditFilter(com.example.woodyzbackend.service.AdminAuditService auditService) {
+        return new AdminAuditFilter(auditService);
+    }
+
+    @Bean
+    public FilterRegistrationBean<JwtAuthenticationFilter> jwtFilterRegistration(
+            JwtAuthenticationFilter filter) {
+        return disabledServletRegistration(filter);
+    }
+
+    @Bean
+    public FilterRegistrationBean<RateLimitFilter> rateLimitFilterRegistration(RateLimitFilter filter) {
+        return disabledServletRegistration(filter);
+    }
+
+    @Bean
+    public FilterRegistrationBean<AdminAuditFilter> adminAuditFilterRegistration(AdminAuditFilter filter) {
+        return disabledServletRegistration(filter);
+    }
+
+    private <T extends javax.servlet.Filter> FilterRegistrationBean<T> disabledServletRegistration(T filter) {
+        FilterRegistrationBean<T> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 }

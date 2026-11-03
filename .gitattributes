@@ -1,0 +1,2 @@
+backend/db/postgres/*.sh text eol=lf
+backend/db/postgres/*.sql text eol=lf

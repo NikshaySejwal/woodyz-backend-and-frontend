@@ -16,15 +16,19 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.context.TestPropertySource;
 
 import com.example.woodyzbackend.config.SecurityConfig;
 import com.example.woodyzbackend.entity.User;
 import com.example.woodyzbackend.security.JwtTokenProvider;
+import com.example.woodyzbackend.security.PostgresRlsContext;
 import com.example.woodyzbackend.service.UserService;
 
 @WebMvcTest(UserController.class)
 @Import(SecurityConfig.class)
+@TestPropertySource(properties = {"app.security.require-https=false", "app.rate-limit.enabled=false"})
 @SuppressWarnings("null")
 class UserControllerSecurityTest {
 
@@ -33,6 +37,18 @@ class UserControllerSecurityTest {
 
     @MockBean
     private UserService userService;
+
+    @MockBean
+    @SuppressWarnings("unused")
+    private PostgresRlsContext rlsContext;
+
+    @MockBean
+    @SuppressWarnings("unused")
+    private StringRedisTemplate redisTemplate;
+
+    @MockBean
+    @SuppressWarnings("unused")
+    private com.example.woodyzbackend.service.AdminAuditService adminAuditService;
 
     @MockBean
     @SuppressWarnings("unused")

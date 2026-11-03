@@ -20,6 +20,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.context.TestPropertySource;
 import org.mockito.ArgumentCaptor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -27,10 +28,12 @@ import com.example.woodyzbackend.config.SecurityConfig;
 import com.example.woodyzbackend.dto.ManufacturingQuoteRequestCreateDTO;
 import com.example.woodyzbackend.entity.ManufacturingQuoteRequest;
 import com.example.woodyzbackend.security.JwtTokenProvider;
+import com.example.woodyzbackend.security.PostgresRlsContext;
 import com.example.woodyzbackend.service.ManufacturingQuoteRequestService;
 
 @WebMvcTest(ManufacturingQuoteRequestController.class)
 @Import(SecurityConfig.class)
+@TestPropertySource(properties = {"app.security.require-https=false", "app.rate-limit.enabled=false"})
 @SuppressWarnings("null")
 class ManufacturingQuoteRequestSecurityTest {
 
@@ -42,6 +45,18 @@ class ManufacturingQuoteRequestSecurityTest {
 
     @MockBean
     private ManufacturingQuoteRequestService service;
+
+    @MockBean
+    @SuppressWarnings("unused")
+    private PostgresRlsContext rlsContext;
+
+    @MockBean
+    @SuppressWarnings("unused")
+    private org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
+
+    @MockBean
+    @SuppressWarnings("unused")
+    private com.example.woodyzbackend.service.AdminAuditService adminAuditService;
 
     @MockBean
     @SuppressWarnings("unused")

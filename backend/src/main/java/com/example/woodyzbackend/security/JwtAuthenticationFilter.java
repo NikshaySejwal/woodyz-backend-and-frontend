@@ -24,10 +24,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private UserDetailsService userDetailsService;
 
+    @Autowired
+    private PostgresRlsContext rlsContext;
+
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
         String jwt = getJwtFromRequest(request);
+
+        if (rlsContext.isEnabled()) {
+            if (jwt != null && tokenProvider.validateJwtToken(jwt)) {
+                String username = tokenProvider.getUsernameFromJwtToken(jwt);
+                rlsContext.filter(username, request, response, filterChain, userDetailsService);
+                return;
+            }
+            if (isAuthenticationEndpoint(request)) {
+                rlsContext.filter(null, request, response, filterChain, userDetailsService);
+                return;
+            }
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         if (jwt != null && tokenProvider.validateJwtToken(jwt)) {
             String username = tokenProvider.getUsernameFromJwtToken(jwt);
@@ -41,6 +58,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isAuthenticationEndpoint(HttpServletRequest request) {
+        return "POST".equalsIgnoreCase(request.getMethod())
+                && ("/api/auth/login".equals(request.getRequestURI())
+                        || "/api/auth/signup".equals(request.getRequestURI()));
     }
 
     private String getJwtFromRequest(HttpServletRequest request) {

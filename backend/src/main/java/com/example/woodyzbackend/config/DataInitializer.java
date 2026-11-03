@@ -31,8 +31,9 @@ public class DataInitializer {
             com.example.woodyzbackend.repository.UserRepository userRepository,
             OrderRepository orderRepository,
             OrderStatusHistoryRepository orderHistoryRepository,
-            org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
-        return args -> {
+            org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
+            com.example.woodyzbackend.security.PostgresRlsContext rlsContext) {
+        return args -> rlsContext.executeAsAdmin(() -> {
             if (seedDemoData && productRepository.count() == 0) {
                 Product p1 = new Product();
                 p1.setName("Classic Wooden Blocks");
@@ -107,6 +108,6 @@ public class DataInitializer {
 
                 System.out.println("Sample order seeded successfully!");
             }
-        };
+        });
     }
 }

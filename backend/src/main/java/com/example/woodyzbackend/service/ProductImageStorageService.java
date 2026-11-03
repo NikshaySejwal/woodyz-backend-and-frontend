@@ -4,11 +4,13 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Locale;
 
 import javax.imageio.ImageIO;
 
@@ -55,5 +57,29 @@ public class ProductImageStorageService {
             Files.copy(input, destination, StandardCopyOption.REPLACE_EXISTING);
         }
         return "/uploads/" + filename;
+    }
+
+    public Path findStoredImage(String filename) {
+        int extensionSeparator = filename.lastIndexOf('.');
+        if (extensionSeparator <= 0) {
+            return null;
+        }
+        String id = filename.substring(0, extensionSeparator);
+        String extension = filename.substring(extensionSeparator + 1).toLowerCase(Locale.ROOT);
+        if (!EXTENSIONS.containsValue(extension)) {
+            return null;
+        }
+        try {
+            if (!UUID.fromString(id).toString().equals(id)) {
+                return null;
+            }
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
+        Path image = uploadDirectory.resolve(filename).normalize();
+        if (!image.getParent().equals(uploadDirectory) || !Files.isRegularFile(image, LinkOption.NOFOLLOW_LINKS)) {
+            return null;
+        }
+        return image;
     }
 }

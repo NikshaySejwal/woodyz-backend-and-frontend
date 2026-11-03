@@ -12,6 +12,7 @@ import com.example.woodyzbackend.repository.OrderStatusHistoryRepository;
 import com.example.woodyzbackend.repository.ProductRepository;
 import com.example.woodyzbackend.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import com.example.woodyzbackend.security.PostgresRlsContext;
 
 class DataInitializerTest {
 
@@ -27,8 +28,9 @@ class DataInitializerTest {
         OrderRepository orders = mock(OrderRepository.class);
         OrderStatusHistoryRepository orderHistory = mock(OrderStatusHistoryRepository.class);
         PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
+        PostgresRlsContext rlsContext = mock(PostgresRlsContext.class);
 
-        assertDoesNotThrow(() -> initializer.initData(products, users, orders, orderHistory, passwordEncoder).run());
+        assertDoesNotThrow(() -> initializer.initData(products, users, orders, orderHistory, passwordEncoder, rlsContext).run());
 
         verifyNoInteractions(products, users, orders, orderHistory, passwordEncoder);
     }
