@@ -33,13 +33,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String jwt = getJwtFromRequest(request);
 
         if (rlsContext.isEnabled()) {
+            if (isAuthenticationEndpoint(request)) {
+                rlsContext.filter(null, request, response, filterChain, userDetailsService);
+                return;
+            }
             if (jwt != null && tokenProvider.validateJwtToken(jwt)) {
                 String username = tokenProvider.getUsernameFromJwtToken(jwt);
                 rlsContext.filter(username, request, response, filterChain, userDetailsService);
-                return;
-            }
-            if (isAuthenticationEndpoint(request)) {
-                rlsContext.filter(null, request, response, filterChain, userDetailsService);
                 return;
             }
             filterChain.doFilter(request, response);
