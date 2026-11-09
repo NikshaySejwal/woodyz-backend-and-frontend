@@ -27,9 +27,14 @@ public class StripeService {
         Stripe.apiKey = stripeApiKey;
     }
 
+    public boolean isConfigured() {
+        return stripeApiKey != null && !stripeApiKey.isBlank()
+                && !stripeApiKey.startsWith("sk_test_mock");
+    }
+
     public String createPaymentIntent(double amount, String currency, String idempotencyKey) throws Exception {
-        if (stripeApiKey == null || stripeApiKey.startsWith("sk_test_mock")) {
-            return "pi_mock_secret_" + idempotencyKey;
+        if (!isConfigured()) {
+            throw new IllegalStateException("Stripe payments are not configured");
         }
         // Stripe expects amount in cents
         long amountInCents = (long) (amount * 100);

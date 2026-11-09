@@ -125,10 +125,10 @@ export default function ProductReviews({ productId }) {
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-sage rounded-xl border-2 border-charcoal flex items-center justify-center font-black text-white">
-                      {review.username.charAt(0).toUpperCase()}
+                      {review.username?.charAt(0)?.toUpperCase() || '?'}
                     </div>
                     <div>
-                      <h4 className="font-black text-sm">{review.username}</h4>
+                      <h4 className="font-black text-sm">{review.username || 'Explorer'}</h4>
                       <p className="text-[10px] font-black uppercase tracking-widest text-charcoal/40">
                         {new Date(review.createdAt).toLocaleDateString()}
                       </p>

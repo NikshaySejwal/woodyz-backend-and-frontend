@@ -29,6 +29,7 @@ class PaymentControllerTest {
         ReflectionTestUtils.setField(controller, "productRepository", productRepository);
         ReflectionTestUtils.setField(controller, "stripeWebhookService", mock(StripeWebhookService.class));
 
+        when(stripeService.isConfigured()).thenReturn(true);
         Product product = new Product();
         product.setPrice(12.5);
         when(productRepository.findById(4L)).thenReturn(Optional.of(product));
@@ -55,5 +56,18 @@ class PaymentControllerTest {
 
         assertEquals(400, response.getStatusCodeValue());
         assertEquals("Idempotency-Key must be a UUID", response.getBody());
+    }
+
+    @Test
+    void createPaymentIntentReturnsUnavailableWhenStripeIsNotConfigured() {
+        PaymentController controller = new PaymentController();
+        StripeService stripeService = mock(StripeService.class);
+        ReflectionTestUtils.setField(controller, "stripeService", stripeService);
+
+        ResponseEntity<?> response = controller.createPaymentIntent(
+                Map.of("items", List.of()), "123e4567-e89b-12d3-a456-426614174000", null);
+
+        assertEquals(503, response.getStatusCodeValue());
+        assertEquals(Map.of("error", "Card payments are temporarily unavailable"), response.getBody());
     }
 }

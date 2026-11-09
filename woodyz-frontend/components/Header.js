@@ -61,10 +61,10 @@ const Header = () => {
             <div className="hidden sm:flex items-center gap-4">
               <Link href="/profile" className="flex items-center gap-2 hover:text-cedar transition-colors no-underline text-charcoal">
                 <div className="w-8 h-8 bg-maple rounded-lg border-2 border-charcoal flex items-center justify-center text-white text-xs font-black">
-                  {user.username.charAt(0).toUpperCase()}
+                  {user.username?.charAt(0)?.toUpperCase() || '?'}
                 </div>
                 <span className="font-bold text-[10px] uppercase tracking-widest">
-                  {user.username}
+                  {user.username || 'Explorer'}
                 </span>
               </Link>
               <button

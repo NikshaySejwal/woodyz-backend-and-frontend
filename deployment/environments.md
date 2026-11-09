@@ -25,7 +25,7 @@ Configured in `docker-compose.yml`:
 - `APP_RATE_LIMIT_ENABLED`: Keep `true` in production. Redis is required; failures return 503 rather than silently disabling limits. Limits are 5 login/signup requests per 15 minutes per IP, 10 public support/quote submissions per 15 minutes per IP, and 120 API requests per minute per authenticated user (anonymous API traffic is grouped by IP).
 - `APP_REQUIRE_HTTPS`: Keep `true` in production. The hosting ingress must terminate TLS, redirect any public HTTP traffic, block direct public backend access, and strip/overwrite forwarded-protocol headers before forwarding requests.
 - `APP_CORS_ALLOW_HTTP_LOCALHOST`: Leave `false` in production. Set `true` only for local development when the exact configured origin is `http://localhost` or `http://127.0.0.1`.
-- `STRIPE_API_KEY`: Required. For payment processing.
+- `STRIPE_API_KEY`: Optional while checkout is disabled. Set a valid Stripe secret key to enable payment processing; without it, payment-intent requests return 503 and checkout is unavailable.
 - `STRIPE_WEBHOOK_SECRET`: Optional for local runs; required to enable signed Stripe webhook processing.
 - `SENDGRID_API_KEY`: Required. For email services.
 - `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_EMAIL`: Optional first-run ADMIN bootstrap values. Use a unique username and strong password from the provider secret store; remove the bootstrap password after the account is created.
@@ -42,11 +42,11 @@ Configured in `docker-compose.yml`. The repository does not contain an `.env.exa
 
 - `NEXT_PUBLIC_API_URL`: Backend API URL, compiled into the frontend image at build time. `http://localhost:8080` is a local-development default only; production is expected to use `https://api.woodyz.in`, pending owner confirmation and domain setup.
 - `NEXT_PUBLIC_SITE_URL`: Frontend public URL. The owner confirmed `https://woodyz.in` as canonical; if GoDaddy DNS cannot connect the apex to Railway, decide whether to use `https://www.woodyz.in` and forward the apex before production builds.
-- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: Stripe publishable key.
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: Optional while checkout is disabled. Set the matching live publishable key when enabling Stripe checkout.
 - `BACKEND_URL`: Server-side frontend-to-backend target. It is `http://backend:8080` in local Compose; on Railway, set it to the backend's private service URL.
 - `BACKEND_IMAGE`, `FRONTEND_IMAGE`: Optional image references; local defaults build from source under `woodyz-backend:local` and `woodyz-frontend:local`.
 
-For GitHub Actions production image builds, configure repository variables `NEXT_PUBLIC_API_URL` (public HTTPS API origin), `NEXT_PUBLIC_SITE_URL` (public HTTPS storefront origin), and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (live `pk_live_` key). These values are compiled into the frontend, and the API origin is added to the Content Security Policy. The image workflow fails if the values are missing or do not pass the production checks.
+For GitHub Actions production image builds, configure repository variables `NEXT_PUBLIC_API_URL` (public HTTPS API origin) and `NEXT_PUBLIC_SITE_URL` (public HTTPS storefront origin). `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` is optional while checkout is disabled; when provided, it must be a live `pk_live_` key. These values are compiled into the frontend, and the API origin is added to the Content Security Policy.
 
 The public Manufacturing form does not require authentication. Its admin inbox requires the existing bearer JWT and ADMIN role. No quote-specific environment variable is added.
 
@@ -61,7 +61,7 @@ Checkout sends a required UUID `Idempotency-Key` request header when creating a 
 
 ## Secrets Handling
 
-Secrets are passed as environment variables. The `docker-compose.yml` enforces that critical secrets like `POSTGRES_PASSWORD`, `APP_DB_PASSWORD`, `APP_JWT_SECRET`, `SUPPORT_ENCRYPTION_KEY`, `STRIPE_API_KEY`, and `SENDGRID_API_KEY` must be set in the host environment before running. `STRIPE_WEBHOOK_SECRET` is optional at startup; the webhook endpoint returns 503 until it is configured. Signed Stripe webhook events are verified before deduplication/recording.
+Secrets are passed as environment variables. The `docker-compose.yml` enforces that critical secrets like `POSTGRES_PASSWORD`, `APP_DB_PASSWORD`, `APP_JWT_SECRET`, `SUPPORT_ENCRYPTION_KEY`, and `SENDGRID_API_KEY` must be set in the host environment before running. `STRIPE_API_KEY` and `STRIPE_WEBHOOK_SECRET` are optional while Stripe payments are disabled; the webhook endpoint returns 503 until its secret is configured. Signed Stripe webhook events are verified before deduplication/recording.
 
 Uploads are stored outside the static web root and are not exposed through Spring's directory resource handler. Only UUID-named images referenced by a product record are served publicly as storefront product images. Keep the upload volume private to the backend host; do not expose it through a CDN or web-server directory mapping.
 

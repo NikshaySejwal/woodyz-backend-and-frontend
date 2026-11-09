@@ -63,11 +63,11 @@ export default function UserProfile() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
               <div className="flex items-center gap-8">
                 <div className="w-24 h-24 bg-maple rounded-[40px] border-4 border-charcoal flex items-center justify-center text-white text-4xl font-black shadow-[8px_8px_0px_0px_#3A322B]">
-                  {user.username.charAt(0).toUpperCase()}
+                  {user.username?.charAt(0)?.toUpperCase() || '?'}
                 </div>
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.3em] text-cedar mb-2">Explorer Profile</p>
-                  <h1 className="font-display text-6xl font-black text-3d mb-1">{user.username}</h1>
+                  <h1 className="font-display text-6xl font-black text-3d mb-1">{user.username || 'Explorer'}</h1>
                   <p className="text-lg font-bold text-charcoal/40">{user.email}</p>
                 </div>
               </div>

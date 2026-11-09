@@ -20,11 +20,11 @@ jobs:
           NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
         run: |
-          if [ -z "$NEXT_PUBLIC_API_URL" ] || [ -z "$NEXT_PUBLIC_SITE_URL" ] || [ -z "$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY" ]; then
-            echo "Set NEXT_PUBLIC_API_URL, NEXT_PUBLIC_SITE_URL, and NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as repository variables."
+          if [ -z "$NEXT_PUBLIC_API_URL" ] || [ -z "$NEXT_PUBLIC_SITE_URL" ]; then
+            echo "Set NEXT_PUBLIC_API_URL and NEXT_PUBLIC_SITE_URL as repository variables."
             exit 1
           fi
-          node -e 'for (const name of ["NEXT_PUBLIC_API_URL", "NEXT_PUBLIC_SITE_URL"]) { const u = new URL(process.env[name]); if (u.protocol !== "https:") { console.error(`${name} must use HTTPS`); process.exit(1); } } if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY.startsWith("pk_live_")) { console.error("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY must be a live Stripe publishable key for production images"); process.exit(1); }'
+          node -e 'for (const name of ["NEXT_PUBLIC_API_URL", "NEXT_PUBLIC_SITE_URL"]) { const u = new URL(process.env[name]); if (u.protocol !== "https:") { console.error(`${name} must use HTTPS`); process.exit(1); } } const key = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY; if (key && !key.startsWith("pk_live_")) { console.error("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY must be a live Stripe publishable key when configured"); process.exit(1); }'
 
       - name: Set up Java 25
         uses: actions/setup-java@v4

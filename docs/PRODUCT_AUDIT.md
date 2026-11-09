@@ -8,7 +8,7 @@
 
 The repository has a working Next.js storefront and a layered Spring Boot API. The separate Manufacturing quote flow is implemented with field validation, a restricted public receipt, an ADMIN-only inbox, and focused tests. The current branch passes the checked backend, Python safety, quote-validation, and frontend production-build checks.
 
-**The website is not launch-ready yet.** The highest impact user-facing gap is checkout: shipping fields are displayed but are not collected into application state or sent with the order, so a successful payment does not have a usable shipping destination. The storefront also contains visible controls that do nothing, a fake newsletter confirmation, and a duplicate support widget. Payment configuration must be privately verified because the backend has an explicit mock PaymentIntent path.
+**The website is not launch-ready yet.** The highest impact user-facing gap is checkout: shipping fields are displayed but are not collected into application state or sent with the order, so a successful payment does not have a usable shipping destination. The storefront also contains visible controls that do nothing, a fake newsletter confirmation, and a duplicate support widget. Stripe checkout is disabled until valid matching keys are configured.
 
 This was not a visual/browser audit. The available session did not provide a usable browser for screenshots or keyboard/mobile interaction checks. An attempted public scrape of `https://woodyz.in` and `/manufacturing` failed to retrieve page content. Those failures do not establish whether the site is up or down. Live rendering, contrast, Core Web Vitals, indexing, DNS/TLS, and deployed API behavior remain unverified.
 
@@ -35,11 +35,11 @@ Reviewed the Next.js Pages Router routes and shared components, the quote featur
 
 ### P0 — Live Stripe configuration needs a guarded release check
 
-**Evidence:** `backend/src/main/java/com/example/woodyzbackend/service/StripeService.java` contains a mock PaymentIntent response for a missing key or a key beginning `sk_test_mock`. Compose only requires a nonempty key; it does not verify a live secret-key prefix. The repository engineering review already records this as an owner verification gate.
+**Evidence:** `backend/src/main/java/com/example/woodyzbackend/service/StripeService.java` now rejects PaymentIntent creation when the Stripe key is missing or is the mock placeholder. Compose permits the key to be omitted, and the checkout UI reports when online payments are unavailable.
 
-**Impact:** an invalid production configuration can create a fabricated client secret instead of a real Stripe PaymentIntent. The frontend's `pk_live_` build-time check does not prove the backend secret is live or that the webhook is configured.
+**Impact:** customers cannot place online orders until live Stripe credentials are configured. The workflow checks the format of a provided frontend key but does not prove that the backend secret matches it or that the webhook is configured.
 
-**Required before launch:** owner verifies (without sharing secrets) that the backend has the intended live Stripe secret, frontend has the matching live publishable key, webhook endpoint has the matching signing secret, and a low-value real payment/order/refund rehearsal succeeds. Production startup should fail closed on mock/test configuration.
+**Required before enabling live checkout:** owner verifies (without sharing secrets) that the backend has the intended live Stripe secret, frontend has the matching live publishable key, webhook endpoint has the matching signing secret, and a low-value real payment/order/refund rehearsal succeeds. Production startup should fail closed on missing or mock configuration.
 
 ### P1 — Visible controls and promotions do not perform the implied action
 

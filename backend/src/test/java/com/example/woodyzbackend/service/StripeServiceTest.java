@@ -8,7 +8,6 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -22,16 +21,23 @@ class StripeServiceTest {
     private static final String PAYLOAD = "{\"id\":\"evt_test\",\"object\":\"event\",\"type\":\"payment_intent.succeeded\",\"data\":{\"object\":{\"id\":\"pi_test\",\"object\":\"payment_intent\"}}}";
 
     @Test
-    void createMockPaymentIntentIsStableForSameIdempotencyKey() throws Exception {
+    void createPaymentIntentRejectsMissingStripeKey() {
+        StripeService stripeService = new StripeService();
+        ReflectionTestUtils.setField(stripeService, "stripeApiKey", "");
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> stripeService.createPaymentIntent(25.0, "usd", "customer:key-1"));
+
+        assertEquals("Stripe payments are not configured", exception.getMessage());
+    }
+
+    @Test
+    void createPaymentIntentRejectsMockStripeKey() {
         StripeService stripeService = new StripeService();
         ReflectionTestUtils.setField(stripeService, "stripeApiKey", "sk_test_mock_key");
 
-        String initialIntent = stripeService.createPaymentIntent(25.0, "usd", "customer:key-1");
-        String retryIntent = stripeService.createPaymentIntent(25.0, "usd", "customer:key-1");
-        String distinctIntent = stripeService.createPaymentIntent(25.0, "usd", "customer:key-2");
-
-        assertEquals(initialIntent, retryIntent);
-        assertNotEquals(initialIntent, distinctIntent);
+        assertThrows(IllegalStateException.class,
+                () -> stripeService.createPaymentIntent(25.0, "usd", "customer:key-1"));
     }
 
     @Test

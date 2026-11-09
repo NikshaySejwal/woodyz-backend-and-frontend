@@ -52,7 +52,7 @@ export default function Checkout() {
 
   // Reuse the same Stripe request key when this cart is retried in the session.
   useEffect(() => {
-    if (!demoPaymentsEnabled && cartTotal > 0 && user?.id) {
+    if (!demoPaymentsEnabled && stripePromise && cartTotal > 0 && user?.id) {
       let active = true;
       setClientSecret("");
       const cartFingerprint = getCartFingerprint(cartItems);
@@ -212,6 +212,10 @@ export default function Checkout() {
                       )}
                       {!shippingComplete && <p className="text-sm font-bold text-charcoal/50">Complete every shipping field before confirming your demo order.</p>}
                     </div>
+                  ) : !stripePromise ? (
+                    <p role="status" className="rounded-xl border-2 border-orange bg-orange/10 p-4 text-sm font-bold">
+                      Online payments are temporarily unavailable. Please try again later.
+                    </p>
                   ) : clientSecret ? (
                     <Elements stripe={stripePromise} options={{ clientSecret }}>
                       <CheckoutForm totalAmount={cartTotal} onPaymentSuccess={handleOrderCompletion} disabled={!shippingComplete} />
