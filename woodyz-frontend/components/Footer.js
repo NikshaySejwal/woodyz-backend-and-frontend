@@ -14,7 +14,7 @@ const Footer = () => {
               <span className="font-display text-4xl font-black tracking-tighter text-charcoal">WOODYZ</span>
             </Link>
             <p className="text-charcoal/60 font-bold leading-relaxed">
-              Crafting childhood moments and thoughtful homes with sustainable wooden toys made for curious little explorers.
+              Wooden toys and products for curious little explorers.
             </p>
             <div className="flex gap-4">
               <a href="mailto:hello@woodyz.in" id="footer-social-ig" className="w-12 h-12 bg-cream border-2 border-charcoal rounded-2xl flex items-center justify-center btn-pop" aria-label="Email WOODYZ">
@@ -33,22 +33,17 @@ const Footer = () => {
           <div>
             <h4 className="text-xs font-black uppercase tracking-[0.3em] mb-10 text-cedar">Shop Collection</h4>
             <ul className="space-y-4 font-black text-sm uppercase tracking-widest list-none p-0">
-              <li><Link href="/products" id="foot-shop-1" className="hover:text-cedar text-charcoal no-underline">Building Sets</Link></li>
-              <li><Link href="/products" id="foot-shop-2" className="hover:text-cedar text-charcoal no-underline">Learning Puzzles</Link></li>
-              <li><Link href="/products" id="foot-shop-3" className="hover:text-cedar text-charcoal no-underline">Musical Toys</Link></li>
-              <li><Link href="/products" id="foot-shop-4" className="hover:text-cedar text-charcoal no-underline">Nursery Decor</Link></li>
-              <li><Link href="/checkout" id="foot-shop-5" className="hover:text-cedar text-charcoal no-underline">Gift Card</Link></li>
+              <li><Link href="/products" id="foot-shop-1" className="hover:text-cedar text-charcoal no-underline">All Products</Link></li>
             </ul>
           </div>
 
-          {/* Our Story */}
+          {/* About */}
           <div>
-            <h4 className="text-xs font-black uppercase tracking-[0.3em] mb-10 text-cedar">Our Story</h4>
+            <h4 className="text-xs font-black uppercase tracking-[0.3em] mb-10 text-cedar">About</h4>
             <ul className="space-y-4 font-black text-sm uppercase tracking-widest list-none p-0">
-              <li><Link href="/ai" id="foot-story-1" className="hover:text-cedar text-charcoal no-underline">Sustainability</Link></li>
-              <li><Link href="/ai" id="foot-story-2" className="hover:text-cedar text-charcoal no-underline">Craftsmanship</Link></li>
+              <li><Link href="/ai" id="foot-story-1" className="hover:text-cedar text-charcoal no-underline">About WOODYZ</Link></li>
               <li><Link href="/manufacturing" id="foot-story-manufacturing" className="hover:text-cedar text-charcoal no-underline">Custom manufacturing</Link></li>
-              <li><Link href="/privacy-policy" id="foot-story-3" className="hover:text-cedar text-charcoal no-underline">Safety & Privacy</Link></li>
+              <li><Link href="/privacy-policy" id="foot-story-3" className="hover:text-cedar text-charcoal no-underline">Privacy Policy</Link></li>
               <li><Link href="/sitemap" id="foot-story-4" className="hover:text-cedar text-charcoal no-underline">Site Map</Link></li>
               <li><Link href="/terms-and-conditions" id="foot-story-5" className="hover:text-cedar text-charcoal no-underline">Terms</Link></li>
             </ul>
@@ -56,13 +51,9 @@ const Footer = () => {
 
           {/* Studio Info */}
           <div className="bg-cream border-4 border-charcoal rounded-[40px] p-8">
-            <h4 className="text-xs font-black uppercase tracking-[0.3em] mb-6 text-cedar">Visit our Studio</h4>
+            <h4 className="text-xs font-black uppercase tracking-[0.3em] mb-6 text-cedar">Contact WOODYZ</h4>
             <p className="font-black text-sm mb-4">WOODYZ Studio<br />Bengaluru, India</p>
             <a href="mailto:hello@woodyz.in" className="font-black text-sm text-sage no-underline hover:underline">hello@woodyz.in</a>
-            <div className="mt-8 flex gap-2 items-center">
-              <iconify-icon icon="ph:clock-bold" class="text-xl"></iconify-icon>
-              <span className="text-[10px] font-black uppercase tracking-wider">Mon–Fri: 9am–5pm</span>
-            </div>
           </div>
         </div>
 

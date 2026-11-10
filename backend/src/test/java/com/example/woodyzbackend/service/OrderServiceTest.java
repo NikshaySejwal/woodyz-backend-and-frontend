@@ -156,6 +156,33 @@ class OrderServiceTest {
     }
 
     @Test
+    void saveCustomerOrderRejectsUnpublishedProducts() {
+        setUp();
+        Authentication authentication = org.mockito.Mockito.mock(Authentication.class);
+        when(authentication.getName()).thenReturn("customer");
+        User customer = new User();
+        customer.setId(42L);
+        when(userRepository.findByUsername("customer")).thenReturn(customer);
+
+        Product draft = new Product();
+        draft.setPublished(Boolean.FALSE);
+        when(productRepository.findById(9L)).thenReturn(Optional.of(draft));
+
+        CheckoutItemRequest item = new CheckoutItemRequest();
+        item.setProductId(9L);
+        item.setQuantity(1);
+        Order order = new Order();
+        order.setPaymentIntentId("pi_draft");
+        order.setItems(Collections.singletonList(item));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> orderService.saveCustomerOrder(order, authentication));
+
+        assertEquals("Product is not available", exception.getMessage());
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
     void saveCustomerOrderVerifiesAndConsumesLocalDemoPaymentWithoutSendingEmail() throws Exception {
         setUp();
         Authentication authentication = org.mockito.Mockito.mock(Authentication.class);

@@ -51,6 +51,9 @@ public class DemoPaymentController {
                 if (product == null) {
                     return ResponseEntity.badRequest().body("Product not found");
                 }
+                if (!product.isPublished()) {
+                    return ResponseEntity.badRequest().body("Product is not available");
+                }
                 if (!Double.isFinite(product.getPrice()) || product.getPrice() <= 0) {
                     return ResponseEntity.badRequest().body("Product price is invalid");
                 }

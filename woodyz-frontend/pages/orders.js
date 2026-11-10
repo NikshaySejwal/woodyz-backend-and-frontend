@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useAuthGuard } from '../hooks/useAuthGuard';
 import LoadingScreen from '../components/ui/LoadingScreen';
 import api from '../lib/api';
+import { formatCurrency } from '../lib/currency';
 
 export default function MyOrders() {
   const { user, isReady } = useAuthGuard();
@@ -60,7 +61,7 @@ export default function MyOrders() {
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-charcoal/40 mb-1">Order #{order.id}</p>
                         <h3 className="text-2xl font-black mb-1">Placed on {new Date().toLocaleDateString()}</h3>
-                        <p className="font-black text-cedar">${order.totalAmount.toFixed(2)}</p>
+                        <p className="font-black text-cedar">{formatCurrency(order.totalAmount)}</p>
                       </div>
                     </div>
 

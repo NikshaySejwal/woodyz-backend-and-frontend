@@ -2,32 +2,47 @@ import { useState, useMemo } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import Seo from '../components/Seo';
-import { resolveAssetUrl } from '../lib/api';
+import { getServerApiBaseUrl, resolveAssetUrl } from '../lib/api';
+import { formatCurrency } from '../lib/currency';
 
-export default function Products({ products }) {
-  const [selectedCategory, setSelectedCategory] = useState('All');
+export default function Products({ products, initialCategory, catalogError }) {
+  const router = useRouter();
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   
   const categories = useMemo(() => {
-    const cats = ['All', ...new Set(products.map(p => p.category).filter(Boolean))];
+    const cats = ['All', ...new Set([
+      ...products.map(p => p.category).filter(Boolean),
+      ...(initialCategory !== 'All' ? [initialCategory] : []),
+    ])];
     return cats;
-  }, [products]);
+  }, [products, initialCategory]);
 
   const filteredProducts = useMemo(() => {
     if (selectedCategory === 'All') return products;
     return products.filter(p => p.category === selectedCategory);
   }, [products, selectedCategory]);
 
+  const selectCategory = (category) => {
+    setSelectedCategory(category);
+    router.replace(
+      { pathname: '/products', query: category === 'All' ? {} : { category } },
+      undefined,
+      { shallow: true }
+    );
+  };
+
   return (
     <>
       <Seo
         title="Wooden Toys & Products | WOODYZ"
-        description="Browse the WOODYZ collection of wooden blocks, puzzles, pull toys, train sets, and other handcrafted products."
+        description="Browse the wooden toys and products currently listed by WOODYZ."
         path="/products"
       />
       <Head>
         <title>Shop All | WOODYZ</title>
-        <meta name="description" content="Browse our complete collection of sustainable, handcrafted wooden toys — building sets, puzzles, pull toys, and more." />
+        <meta name="description" content="Browse the wooden toys and products currently listed by WOODYZ." />
       </Head>
 
       <section className="py-16 px-3 sm:px-6">
@@ -41,7 +56,7 @@ export default function Products({ products }) {
             </div>
             <h1 className="font-display text-5xl md:text-7xl font-black text-3d mb-6">Product Catalog</h1>
             <p className="text-xl text-charcoal/60 font-medium max-w-2xl mx-auto mb-12">
-              Every piece is handcrafted from sustainable wood, finished with non-toxic dyes, and designed to spark joy.
+              Explore the products currently available in our catalog.
             </p>
 
             {/* Filter Chips */}
@@ -49,7 +64,7 @@ export default function Products({ products }) {
               {categories.map((cat) => (
                 <button
                   key={cat}
-                  onClick={() => setSelectedCategory(cat)}
+                  onClick={() => selectCategory(cat)}
                   className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all border-3 border-charcoal ${
                     selectedCategory === cat 
                       ? 'bg-cedar text-white shadow-[4px_4px_0px_0px_#3A322B] -translate-y-1' 
@@ -63,7 +78,12 @@ export default function Products({ products }) {
           </div>
 
           {/* Product Grid */}
-          {filteredProducts && filteredProducts.length > 0 ? (
+          {catalogError ? (
+            <div role="status" className="text-center py-20">
+              <h3 className="font-display text-3xl font-black mb-4">Catalog temporarily unavailable</h3>
+              <p className="text-lg font-bold text-charcoal/50">{catalogError}</p>
+            </div>
+          ) : filteredProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {filteredProducts.map((product) => (
                 <Link
@@ -88,7 +108,7 @@ export default function Products({ products }) {
                     <h3 className="font-display text-xl font-black mb-1 group-hover:text-cedar transition-colors">{product.name}</h3>
                     <p className="text-sm font-bold text-charcoal/50 mb-2 line-clamp-2">{product.description}</p>
                     <div className="flex items-center justify-between">
-                      <p className="text-lg font-black text-cedar">${product.price.toFixed(2)}</p>
+                      <p className="text-lg font-black text-cedar">{formatCurrency(product.price)}</p>
                       {product.category && (
                         <span className="text-[10px] font-black uppercase tracking-widest text-charcoal/30">{product.category}</span>
                       )}
@@ -109,7 +129,7 @@ export default function Products({ products }) {
                   : "Our artisans are busy crafting new treasures. Check back soon!"}
               </p>
               <button 
-                onClick={() => setSelectedCategory('All')}
+                onClick={() => selectCategory('All')}
                 className="btn-pop bg-maple text-charcoal border-2 border-charcoal px-10 py-4 rounded-3xl font-black text-lg inline-block"
               >
                 Clear Filters
@@ -122,21 +142,29 @@ export default function Products({ products }) {
   );
 }
 
-export async function getServerSideProps() {
-  // Use internal Docker hostname when running in container, fallback to localhost for dev
-  const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080';
+export async function getServerSideProps({ query }) {
+  const initialCategory = typeof query.category === 'string' ? query.category : 'All';
+  const backendUrl = getServerApiBaseUrl();
+  if (!backendUrl) {
+    return { props: { products: [], initialCategory, catalogError: 'The product service is not configured.' } };
+  }
+
   try {
     const response = await axios.get(`${backendUrl}/api/products`);
     return {
       props: {
         products: response.data || [],
+        initialCategory,
+        catalogError: null,
       },
     };
   } catch (error) {
     console.error("Error fetching products in getServerSideProps:", error.message);
     return {
       props: {
-        products: []
+        products: [],
+        initialCategory,
+        catalogError: 'Please try again in a few moments.',
       }
     }
   }

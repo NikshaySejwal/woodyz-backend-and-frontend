@@ -157,6 +157,9 @@ public class OrderService {
             Long productId = java.util.Objects.requireNonNull(item.getProductId(), "productId must not be null");
             Product product = productRepository.findById(productId).orElseThrow(
                     () -> new IllegalArgumentException("Product not found"));
+            if (!product.isPublished()) {
+                throw new IllegalArgumentException("Product is not available");
+            }
             total += product.getPrice() * item.getQuantity();
         }
         return total;

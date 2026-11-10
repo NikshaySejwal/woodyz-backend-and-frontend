@@ -24,8 +24,9 @@ import com.example.woodyzbackend.service.ProductService;
  * public browsing and administrative management of products.
  *
  * Connections: - Integrates with `ProductService` for all product-related
- * business logic. - Access control is managed via `SecurityConfig`: - GET
- * endpoints are public. - POST, PUT, and DELETE endpoints require `ROLE_ADMIN`.
+ * business logic. - Access control is managed via `SecurityConfig`: - Public
+ * GET endpoints return published products. - `/admin` returns all products to
+ * `ROLE_ADMIN`. - POST, PUT, and DELETE endpoints require `ROLE_ADMIN`.
  * - Exposed via `/api/products/**`.
  */
 @RestController
@@ -39,7 +40,7 @@ public class ProductController {
     private ProductImageStorageService productImageStorageService;
 
     /**
-     * Retrieves all products, optionally filtered by category.
+     * Retrieves published products, optionally filtered by category.
      *
      * @param category Optional category name to filter products.
      * @return A list of `Product` entities.
@@ -47,8 +48,13 @@ public class ProductController {
     @GetMapping
     public List<Product> getAllProducts(@RequestParam(required = false) String category) {
         if (category != null && !category.isEmpty()) {
-            return productService.getProductsByCategory(category);
+            return productService.getPublishedProductsByCategory(category);
         }
+        return productService.getPublishedProducts();
+    }
+
+    @GetMapping("/admin")
+    public List<Product> getProductsForAdmin() {
         return productService.getAllProducts();
     }
 
@@ -64,14 +70,15 @@ public class ProductController {
     }
 
     /**
-     * Retrieves a single product by its ID.
+     * Retrieves a published product by its ID.
      *
      * @param id The unique identifier of the product.
      * @return The requested `Product` entity.
      */
     @GetMapping("/{id}")
-    public Product getProductById(@PathVariable Long id) {
-        return productService.getProductById(id);
+    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+        Product product = productService.getProductById(id);
+        return product == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(product);
     }
 
     /**
@@ -83,7 +90,12 @@ public class ProductController {
      */
     @PostMapping("/")
     public Product createProduct(@RequestBody Product product) {
-        return productService.saveProduct(product);
+        try {
+            return productService.saveProduct(product);
+        } catch (IllegalArgumentException exception) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
+        }
     }
 
     /**
@@ -96,7 +108,12 @@ public class ProductController {
     @PutMapping("/{id}")
     public Product updateProduct(@PathVariable Long id, @RequestBody Product product) {
         product.setId(id);
-        return productService.saveProduct(product);
+        try {
+            return productService.saveProduct(product);
+        } catch (IllegalArgumentException exception) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
+        }
     }
 
     /**

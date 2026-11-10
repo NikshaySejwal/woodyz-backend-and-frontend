@@ -19,6 +19,7 @@ public class Product implements Serializable {
     private double price;
     private String category;
     private String imageUrl;
+    private Boolean published = true;
 
     public Long getId() {
         return id;
@@ -66,5 +67,21 @@ public class Product implements Serializable {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public boolean isPublished() {
+        return !Boolean.FALSE.equals(published);
+    }
+
+    public Boolean getPublished() {
+        return isPublished();
+    }
+
+    public void setPublished(Boolean published) {
+        this.published = published;
+    }
+
+    public void setPublished(boolean published) {
+        this.published = published;
     }
 }

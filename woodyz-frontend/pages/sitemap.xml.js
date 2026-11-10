@@ -1,15 +1,18 @@
 import axios from 'axios';
 import { siteUrl } from '../components/Seo';
+import { getServerApiBaseUrl } from '../lib/api';
 
 export async function getServerSideProps({ res }) {
-  const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080';
+  const backendUrl = getServerApiBaseUrl();
   let products = [];
 
-  try {
-    const response = await axios.get(`${backendUrl}/api/products`);
-    products = response.data || [];
-  } catch (error) {
-    console.error('Sitemap product fetch failed:', error.message);
+  if (backendUrl) {
+    try {
+      const response = await axios.get(`${backendUrl}/api/products`);
+      products = response.data || [];
+    } catch (error) {
+      console.error('Sitemap product fetch failed:', error.message);
+    }
   }
 
   const urls = ['/', '/products', '/privacy-policy', '/terms-and-conditions', '/sitemap', '/ai', '/manufacturing'];

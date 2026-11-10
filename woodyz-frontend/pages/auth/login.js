@@ -23,7 +23,7 @@ export default function Login() {
     <>
       <Head>
         <title>Login | WOODYZ</title>
-        <meta name="description" content="Log into your WOODYZ account to manage orders and track your sustainable wooden toy collection." />
+        <meta name="description" content="Log into your WOODYZ account to manage your orders." />
       </Head>
 
       <section className="py-16 lg:py-24 px-6">

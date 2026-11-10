@@ -27,6 +27,8 @@ Configured in `docker-compose.yml`:
 - `APP_CORS_ALLOW_HTTP_LOCALHOST`: Leave `false` in production. Set `true` only for local development when the exact configured origin is `http://localhost` or `http://127.0.0.1`.
 - `STRIPE_API_KEY`: Optional while checkout is disabled. Set a valid Stripe secret key to enable payment processing; without it, payment-intent requests return 503 and checkout is unavailable.
 - `STRIPE_WEBHOOK_SECRET`: Optional for local runs; required to enable signed Stripe webhook processing.
+- `APP_COMMERCE_ENABLED`: Defaults to `false`. Keep false until the product catalog, currency, shipping, returns, checkout, payment confirmation, fulfillment, and legal policies have passed an end-to-end test. Set true only when the business is ready to accept orders.
+- Product prices and Stripe PaymentIntents use INR for the India launch market. Verify stored product prices are INR before enabling checkout. New products start as unpublished drafts; only published products appear in public catalog APIs, and existing records with no published value remain visible for backward compatibility.
 - `SENDGRID_API_KEY`: Required. For email services.
 - `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_EMAIL`: Optional first-run ADMIN bootstrap values. Use a unique username and strong password from the provider secret store; remove the bootstrap password after the account is created.
 - `APP_SEED_DEMO_DATA`: Defaults to `false`. Set to `true` only for a local/demo database to insert the sample catalog and fake shipped order.
@@ -43,7 +45,8 @@ Configured in `docker-compose.yml`. The repository does not contain an `.env.exa
 - `NEXT_PUBLIC_API_URL`: Backend API URL, compiled into the frontend image at build time. `http://localhost:8080` is a local-development default only; production is expected to use `https://api.woodyz.in`, pending owner confirmation and domain setup.
 - `NEXT_PUBLIC_SITE_URL`: Frontend public URL. The owner confirmed `https://woodyz.in` as canonical; if GoDaddy DNS cannot connect the apex to Railway, decide whether to use `https://www.woodyz.in` and forward the apex before production builds.
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: Optional while checkout is disabled. Set the matching live publishable key when enabling Stripe checkout.
-- `BACKEND_URL`: Server-side frontend-to-backend target. It is `http://backend:8080` in local Compose; on Railway, set it to the backend's private service URL.
+- `NEXT_PUBLIC_COMMERCE_ENABLED`: Build-time switch for displaying checkout. Defaults to `false`; set to `true` only together with backend `APP_COMMERCE_ENABLED=true` after launch readiness checks pass.
+- `BACKEND_URL`: Optional server-side frontend-to-backend target. It is `http://backend:8080` in local Compose; set it to the backend's private service URL when available. Server-rendered catalog pages fall back to `NEXT_PUBLIC_API_URL` when this is unset.
 - `BACKEND_IMAGE`, `FRONTEND_IMAGE`: Optional image references; local defaults build from source under `woodyz-backend:local` and `woodyz-frontend:local`.
 
 For GitHub Actions production image builds, configure repository variables `NEXT_PUBLIC_API_URL` (public HTTPS API origin) and `NEXT_PUBLIC_SITE_URL` (public HTTPS storefront origin). `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` is optional while checkout is disabled; when provided, it must be a live `pk_live_` key. These values are compiled into the frontend, and the API origin is added to the Content Security Policy.

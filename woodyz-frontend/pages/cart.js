@@ -3,10 +3,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCart } from '../context/CartContext';
 import OrderSummary from '../components/ui/OrderSummary';
+import { formatCurrency } from '../lib/currency';
 
 export default function Cart() {
   const router = useRouter();
   const { cartItems, updateQuantity, removeFromCart, cartTotal, cartCount, isLoaded } = useCart();
+  const commerceEnabled = process.env.NEXT_PUBLIC_COMMERCE_ENABLED === 'true';
 
   if (!isLoaded) {
     return null; // Avoid hydration mismatch on initial render
@@ -38,7 +40,7 @@ export default function Cart() {
                     
                     <div className="flex-grow text-center sm:text-left">
                       <h3 className="font-display text-2xl font-black mb-1">{item.name}</h3>
-                      <p className="text-sm font-bold text-charcoal/50 mb-4">${item.price.toFixed(2)} each</p>
+                      <p className="text-sm font-bold text-charcoal/50 mb-4">{formatCurrency(item.price)} each</p>
                       
                       <div className="flex items-center justify-center sm:justify-start gap-4">
                         <div className="flex items-center bg-cream border-2 border-charcoal rounded-xl px-2">
@@ -67,7 +69,7 @@ export default function Cart() {
 
                     <div className="text-right">
                       <p className="font-display text-2xl font-black text-cedar">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        {formatCurrency(item.price * item.quantity)}
                       </p>
                     </div>
                   </div>
@@ -83,17 +85,25 @@ export default function Cart() {
 
                 <div className="w-full md:w-80 space-y-4">
                   <button 
+                    disabled={!commerceEnabled}
                     onClick={() => {
-                      if (cartItems.length === 0) {
+                      if (!commerceEnabled) {
+                        return;
+                      } else if (cartItems.length === 0) {
                         router.push('/products');
                       } else {
                         router.push('/checkout');
                       }
                     }}
-                    className="block w-full text-center btn-pop bg-cedar text-white border-4 border-charcoal px-8 py-5 rounded-[24px] font-black text-lg uppercase tracking-widest no-underline"
+                    className="block w-full text-center btn-pop bg-cedar text-white border-4 border-charcoal px-8 py-5 rounded-[24px] font-black text-lg uppercase tracking-widest no-underline disabled:opacity-50"
                   >
-                    Checkout
+                    {commerceEnabled ? 'Checkout' : 'Ordering Paused'}
                   </button>
+                  {!commerceEnabled && (
+                    <p role="status" className="text-sm font-bold text-charcoal/60">
+                      Online ordering is not available yet.
+                    </p>
+                  )}
                   <Link 
                     href="/products"
                     className="block text-center btn-pop bg-white text-charcoal border-4 border-charcoal px-8 py-5 rounded-[24px] font-black text-lg uppercase tracking-widest no-underline"

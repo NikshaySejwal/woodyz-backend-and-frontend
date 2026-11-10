@@ -24,7 +24,7 @@ export default function Register() {
     <>
       <Head>
         <title>Register | WOODYZ</title>
-        <meta name="description" content="Create your WOODYZ account to start your sustainable toy journey with handcrafted wooden treasures." />
+        <meta name="description" content="Create a WOODYZ account to manage your orders." />
       </Head>
 
       <section className="py-16 lg:py-24 px-6">

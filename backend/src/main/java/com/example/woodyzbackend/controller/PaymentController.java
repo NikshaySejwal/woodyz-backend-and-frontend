@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -44,6 +45,9 @@ public class PaymentController {
     @Autowired
     private StripeWebhookService stripeWebhookService;
 
+    @Value("${app.commerce.enabled:false}")
+    private boolean commerceEnabled;
+
     /**
      * Creates a Stripe Payment Intent based on a list of products and
      * quantities. The total amount is calculated on the server side using
@@ -65,6 +69,10 @@ public class PaymentController {
         }
         if (!parsedRequestKey.toString().equalsIgnoreCase(requestKey)) {
             return ResponseEntity.badRequest().body("Idempotency-Key must be a UUID");
+        }
+        if (!commerceEnabled) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("error", "Online ordering is not enabled"));
         }
         if (!stripeService.isConfigured()) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
@@ -93,9 +101,12 @@ public class PaymentController {
                 if (product == null) {
                     return ResponseEntity.badRequest().body("Product not found: " + productId);
                 }
+                if (!product.isPublished()) {
+                    return ResponseEntity.badRequest().body("Product is not available");
+                }
                 amount += product.getPrice() * quantity;
             }
-            String currency = "usd";
+            String currency = "inr";
 
             String stripeIdempotencyKey = authentication.getName() + ":" + parsedRequestKey;
             String clientSecret = stripeService.createPaymentIntent(amount, currency, stripeIdempotencyKey);

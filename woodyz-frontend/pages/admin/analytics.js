@@ -4,6 +4,7 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import LoadingScreen from '../../components/ui/LoadingScreen';
 import api from '../../lib/api';
 import { useAuthGuard } from '../../hooks/useAuthGuard';
+import { formatCurrency } from '../../lib/currency';
 
 export default function AdminAnalytics() {
   const { isReady: authReady } = useAuthGuard({ requiredRole: 'ADMIN', redirectTo: '/' });
@@ -48,7 +49,7 @@ export default function AdminAnalytics() {
                 <iconify-icon icon="ph:currency-dollar-bold" class="text-2xl text-sage"></iconify-icon>
               </div>
               <p className="text-xs font-black uppercase tracking-widest text-charcoal/40 mb-1">Total Revenue</p>
-              <p className="text-4xl font-black text-charcoal">${stats?.totalRevenue?.toFixed(2)}</p>
+              <p className="text-4xl font-black text-charcoal">{formatCurrency(stats?.totalRevenue || 0)}</p>
             </div>
 
             <div className="bg-white border-4 border-charcoal rounded-[32px] p-8 shadow-[8px_8px_0px_0px_#3A322B]">

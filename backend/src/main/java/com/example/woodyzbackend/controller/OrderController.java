@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -32,6 +33,9 @@ public class OrderController {
 
     @Autowired
     private OrderService orderService;
+
+    @Value("${app.commerce.enabled:false}")
+    private boolean commerceEnabled;
 
     /**
      * Retrieves all orders in the system. Note: Usually restricted to ADMIN via
@@ -102,8 +106,12 @@ public class OrderController {
      * @return The newly created `Order` entity.
      */
     @PostMapping({"", "/"})
-    public Order createOrder(@RequestBody Order order, Authentication authentication) {
-        return orderService.saveCustomerOrder(order, authentication);
+    public ResponseEntity<?> createOrder(@RequestBody Order order, Authentication authentication) {
+        if (!commerceEnabled) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("error", "Online ordering is not enabled"));
+        }
+        return ResponseEntity.ok(orderService.saveCustomerOrder(order, authentication));
     }
 
     @PutMapping("/{id}/status")

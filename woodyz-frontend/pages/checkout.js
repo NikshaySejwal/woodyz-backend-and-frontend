@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -9,11 +10,14 @@ import CheckoutForm from '../components/CheckoutForm';
 import OrderSummary from '../components/ui/OrderSummary';
 import FormField from '../components/ui/FormField';
 import api from '../lib/api';
+import { formatCurrency } from '../lib/currency';
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
   : null;
 const demoPaymentsEnabled = process.env.NEXT_PUBLIC_DEMO_PAYMENTS === 'true';
+const commerceEnabled = process.env.NEXT_PUBLIC_COMMERCE_ENABLED === 'true';
+const SHIPPING_SESSION_KEY = 'woodyz-checkout-shipping';
 
 const getCartFingerprint = (items) => JSON.stringify(
   items
@@ -23,13 +27,30 @@ const getCartFingerprint = (items) => JSON.stringify(
 
 export default function Checkout() {
   const { cartItems, cartTotal, clearCart, isLoaded } = useCart();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [clientSecret, setClientSecret] = useState("");
   const [demoMethod, setDemoMethod] = useState('DEMO_QR');
   const [demoPayment, setDemoPayment] = useState(null);
   const [shipping, setShipping] = useState({ firstName: '', lastName: '', address: '', city: '', zip: '' });
   const router = useRouter();
+
+  useEffect(() => {
+    const savedShipping = window.sessionStorage.getItem(SHIPPING_SESSION_KEY);
+    if (savedShipping) {
+      try {
+        setShipping(JSON.parse(savedShipping));
+      } catch (error) {
+        console.error('Unable to restore checkout shipping details', error);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (Object.values(shipping).some((value) => value.trim())) {
+      window.sessionStorage.setItem(SHIPPING_SESSION_KEY, JSON.stringify(shipping));
+    }
+  }, [shipping]);
 
   const updateShipping = (event) => {
     const { id, value } = event.target;
@@ -52,7 +73,14 @@ export default function Checkout() {
 
   // Reuse the same Stripe request key when this cart is retried in the session.
   useEffect(() => {
-    if (!demoPaymentsEnabled && stripePromise && cartTotal > 0 && user?.id) {
+    if (!router.isReady) {
+      return;
+    }
+    if (typeof router.query.payment_intent_client_secret === 'string') {
+      setClientSecret(router.query.payment_intent_client_secret);
+      return;
+    }
+    if (commerceEnabled && !demoPaymentsEnabled && stripePromise && cartTotal > 0 && user?.id) {
       let active = true;
       setClientSecret("");
       const cartFingerprint = getCartFingerprint(cartItems);
@@ -74,7 +102,7 @@ export default function Checkout() {
 
       return () => { active = false; };
     }
-  }, [cartItems, cartTotal, user?.id]);
+  }, [cartItems, cartTotal, user?.id, router.isReady, router.query.payment_intent_client_secret]);
 
   useEffect(() => {
     setDemoPayment(null);
@@ -84,9 +112,12 @@ export default function Checkout() {
   if (!isLoaded) return null;
 
   const handleOrderCompletion = async (paymentIntentId) => {
+    if (!user?.id) {
+      return false;
+    }
     if (!shippingComplete) {
       alert('Please complete your shipping details before paying.');
-      return;
+      return false;
     }
 
     setLoading(true);
@@ -98,16 +129,19 @@ export default function Checkout() {
       });
       const cartFingerprint = getCartFingerprint(cartItems);
       window.sessionStorage.removeItem(`woodyz-payment-intent:${user.id}:${cartFingerprint}`);
+      window.sessionStorage.removeItem(SHIPPING_SESSION_KEY);
       alert(paymentIntentId.startsWith('demo_')
         ? 'Demo order recorded. No payment or email was sent.'
         : 'Payment Successful! An order confirmation email has been sent.');
       clearCart();
       router.push('/');
+      return true;
     } catch (error) {
       console.error(error);
       alert(paymentIntentId.startsWith('demo_')
         ? 'Demo order could not be recorded. Please try again.'
         : 'Payment successful, but failed to record order. Please contact support.');
+      return false;
     } finally {
       setLoading(false);
     }
@@ -134,6 +168,27 @@ export default function Checkout() {
       router.push('/products');
     }
     return null;
+  }
+
+  if (!commerceEnabled) {
+    return (
+      <>
+        <Head>
+          <title>Ordering Unavailable | WOODYZ</title>
+        </Head>
+        <section className="py-24 px-6 text-center">
+          <div className="max-w-2xl mx-auto">
+            <h1 className="font-display text-4xl font-black mb-4">Online ordering is not available yet</h1>
+            <p className="text-lg font-bold text-charcoal/60 mb-8">
+              We are finalizing product and delivery details before accepting orders.
+            </p>
+            <Link href="/products" className="btn-pop inline-block bg-maple text-charcoal border-2 border-charcoal px-8 py-4 rounded-3xl font-black no-underline">
+              Back to Products
+            </Link>
+          </div>
+        </section>
+      </>
+    );
   }
 
   return (
@@ -216,9 +271,16 @@ export default function Checkout() {
                     <p role="status" className="rounded-xl border-2 border-orange bg-orange/10 p-4 text-sm font-bold">
                       Online payments are temporarily unavailable. Please try again later.
                     </p>
+                  ) : authLoading ? (
+                    <p role="status" className="text-sm font-bold text-charcoal/60">Checking your account…</p>
+                  ) : !user?.id ? (
+                    <p role="status" className="text-sm font-bold text-charcoal/60">
+                      Sign in to complete checkout.{' '}
+                      <Link href="/auth/login" className="text-cedar underline">Sign in</Link>
+                    </p>
                   ) : clientSecret ? (
                     <Elements stripe={stripePromise} options={{ clientSecret }}>
-                      <CheckoutForm totalAmount={cartTotal} onPaymentSuccess={handleOrderCompletion} disabled={!shippingComplete} />
+                      <CheckoutForm totalAmount={cartTotal} onPaymentSuccess={handleOrderCompletion} disabled={!shippingComplete || !user?.id} />
                     </Elements>
                   ) : (
                     <div className="animate-pulse flex flex-col items-center py-8">
@@ -252,7 +314,7 @@ export default function Checkout() {
                         <h4 className="font-black text-sm">{item.name}</h4>
                         <p className="text-xs font-bold text-charcoal/50">Qty: {item.quantity}</p>
                       </div>
-                      <span className="font-black text-sm">${(item.price * item.quantity).toFixed(2)}</span>
+                      <span className="font-black text-sm">{formatCurrency(item.price * item.quantity)}</span>
                     </div>
                   ))}
                 </div>

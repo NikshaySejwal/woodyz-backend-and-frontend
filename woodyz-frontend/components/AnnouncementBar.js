@@ -1,10 +1,8 @@
-import Link from 'next/link';
-
 const AnnouncementBar = () => {
   const items = [
-    { icon: 'ph:seal-check-fill', iconColor: 'text-maple', text: 'CE Certified Safety' },
-    { icon: 'ph:tree-evergreen-fill', iconColor: 'text-sage', text: 'FSC Sustainable Sourcing' },
-    { icon: 'ph:paint-brush-broad-fill', iconColor: 'text-orange', text: 'Non-Toxic Plant-Based Dyes' },
+    { icon: 'ph:horse-bold', iconColor: 'text-maple', text: 'Wooden Toys' },
+    { icon: 'ph:sparkle-fill', iconColor: 'text-sage', text: 'Made for Curious Play' },
+    { icon: 'ph:house-line-bold', iconColor: 'text-orange', text: 'Explore WOODYZ' },
   ];
 
   // Double the items for infinite scroll effect

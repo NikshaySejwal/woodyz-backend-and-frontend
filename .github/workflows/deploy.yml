@@ -81,6 +81,7 @@ jobs:
             NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
             NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}
             NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ vars.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+            NEXT_PUBLIC_COMMERCE_ENABLED=${{ vars.NEXT_PUBLIC_COMMERCE_ENABLED }}
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/woodyz-frontend:latest

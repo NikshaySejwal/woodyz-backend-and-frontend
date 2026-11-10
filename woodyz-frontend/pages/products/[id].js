@@ -8,6 +8,7 @@ import ProductReviews from '../../components/ProductReviews';
 import api from '../../lib/api';
 import Seo, { siteUrl } from '../../components/Seo';
 import { resolveAssetUrl } from '../../lib/api';
+import { formatCurrency } from '../../lib/currency';
 
 export default function ProductDetail() {
   const router = useRouter();
@@ -92,7 +93,7 @@ export default function ProductDetail() {
             brand: { '@type': 'Brand', name: 'WOODYZ' },
             offers: {
               '@type': 'Offer',
-              priceCurrency: 'USD',
+              priceCurrency: 'INR',
               price: product.price,
               url: `${siteUrl}/products/${product.id}`,
             },
@@ -132,10 +133,10 @@ export default function ProductDetail() {
               <div>
                 <div className="inline-flex items-center gap-2 bg-white border-2 border-charcoal px-4 py-2 rounded-full sticker-badge mb-6">
                   <iconify-icon icon="ph:leaf-fill" class="text-sage text-lg"></iconify-icon>
-                  <span className="text-[10px] font-black uppercase tracking-wider">{product.category || 'Sustainably Crafted'}</span>
+                  <span className="text-[10px] font-black uppercase tracking-wider">{product.category || 'WOODYZ Toy'}</span>
                 </div>
                 <h1 className="font-display text-5xl font-black text-3d mb-4">{product.name}</h1>
-                <p className="text-3xl font-black text-cedar">${product.price.toFixed(2)}</p>
+                <p className="text-3xl font-black text-cedar">{formatCurrency(product.price)}</p>
               </div>
 
               <p className="text-lg font-medium text-charcoal/70 leading-relaxed">{product.description}</p>
@@ -148,22 +149,6 @@ export default function ProductDetail() {
                   ))}
                 </div>
                 <span className="text-sm font-black text-charcoal/50">({reviewSummary.reviews.length} reviews)</span>
-              </div>
-
-              {/* Trust Badges */}
-              <div className="flex flex-wrap gap-3">
-                <div className="flex items-center gap-2 bg-white border-2 border-charcoal px-4 py-2 rounded-2xl">
-                  <iconify-icon icon="ph:shield-check-bold" class="text-sage"></iconify-icon>
-                  <span className="text-[10px] font-black uppercase tracking-wider">Non-Toxic</span>
-                </div>
-                <div className="flex items-center gap-2 bg-white border-2 border-charcoal px-4 py-2 rounded-2xl">
-                  <iconify-icon icon="ph:tree-evergreen-bold" class="text-sage"></iconify-icon>
-                  <span className="text-[10px] font-black uppercase tracking-wider">FSC Wood</span>
-                </div>
-                <div className="flex items-center gap-2 bg-white border-2 border-charcoal px-4 py-2 rounded-2xl">
-                  <iconify-icon icon="ph:baby-bold" class="text-orange"></iconify-icon>
-                  <span className="text-[10px] font-black uppercase tracking-wider">Ages 3+</span>
-                </div>
               </div>
 
               {/* Add to Cart */}
@@ -180,21 +165,6 @@ export default function ProductDetail() {
                 </button>
               </div>
 
-              {/* Shipping Info */}
-              <div className="bg-cream border-2 border-charcoal/10 rounded-[28px] p-6 space-y-3">
-                <div className="flex items-center gap-3">
-                  <iconify-icon icon="ph:truck-bold" class="text-xl text-cedar"></iconify-icon>
-                  <span className="text-sm font-black">Free shipping on orders over $50</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <iconify-icon icon="ph:arrow-counter-clockwise-bold" class="text-xl text-cedar"></iconify-icon>
-                  <span className="text-sm font-black">30-day hassle-free returns</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <iconify-icon icon="ph:gift-bold" class="text-xl text-cedar"></iconify-icon>
-                  <span className="text-sm font-black">Gift wrapping available</span>
-                </div>
-              </div>
             </div>
           </div>
 

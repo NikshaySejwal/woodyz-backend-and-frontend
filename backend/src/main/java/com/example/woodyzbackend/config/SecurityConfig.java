@@ -63,6 +63,7 @@ public class SecurityConfig {
                 .authorizeRequests()
                 .antMatchers("/api/auth/**").permitAll()
                 .antMatchers(org.springframework.http.HttpMethod.GET, "/api/user/profile", "/api/users/profile").authenticated()
+                .antMatchers(org.springframework.http.HttpMethod.GET, "/api/products/admin").hasRole("ADMIN")
                 .antMatchers(org.springframework.http.HttpMethod.GET, "/api/products/**").permitAll()
                 .antMatchers(org.springframework.http.HttpMethod.GET, "/uploads/**").permitAll()
                 .antMatchers(org.springframework.http.HttpMethod.GET, "/api/reviews/product/**").permitAll()

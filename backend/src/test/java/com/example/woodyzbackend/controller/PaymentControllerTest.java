@@ -28,12 +28,13 @@ class PaymentControllerTest {
         ReflectionTestUtils.setField(controller, "stripeService", stripeService);
         ReflectionTestUtils.setField(controller, "productRepository", productRepository);
         ReflectionTestUtils.setField(controller, "stripeWebhookService", mock(StripeWebhookService.class));
+        ReflectionTestUtils.setField(controller, "commerceEnabled", true);
 
         when(stripeService.isConfigured()).thenReturn(true);
         Product product = new Product();
         product.setPrice(12.5);
         when(productRepository.findById(4L)).thenReturn(Optional.of(product));
-        when(stripeService.createPaymentIntent(25.0, "usd", "customer:123e4567-e89b-12d3-a456-426614174000"))
+        when(stripeService.createPaymentIntent(25.0, "inr", "customer:123e4567-e89b-12d3-a456-426614174000"))
                 .thenReturn("pi_test_secret");
         Authentication authentication = mock(Authentication.class);
         when(authentication.getName()).thenReturn("customer");
@@ -43,8 +44,29 @@ class PaymentControllerTest {
                 "123e4567-e89b-12d3-a456-426614174000", authentication);
 
         assertEquals(200, response.getStatusCodeValue());
-        verify(stripeService).createPaymentIntent(25.0, "usd",
+        verify(stripeService).createPaymentIntent(25.0, "inr",
                 "customer:123e4567-e89b-12d3-a456-426614174000");
+    }
+
+    @Test
+    void createPaymentIntentRejectsUnpublishedProducts() {
+        PaymentController controller = new PaymentController();
+        StripeService stripeService = mock(StripeService.class);
+        ProductRepository productRepository = mock(ProductRepository.class);
+        ReflectionTestUtils.setField(controller, "stripeService", stripeService);
+        ReflectionTestUtils.setField(controller, "productRepository", productRepository);
+        ReflectionTestUtils.setField(controller, "commerceEnabled", true);
+        when(stripeService.isConfigured()).thenReturn(true);
+        Product product = new Product();
+        product.setPublished(Boolean.FALSE);
+        when(productRepository.findById(4L)).thenReturn(Optional.of(product));
+
+        ResponseEntity<?> response = controller.createPaymentIntent(
+                Map.of("items", List.of(Map.of("productId", 4L, "quantity", 1))),
+                "123e4567-e89b-12d3-a456-426614174000", mock(Authentication.class));
+
+        assertEquals(400, response.getStatusCodeValue());
+        assertEquals("Product is not available", response.getBody());
     }
 
     @Test
@@ -59,10 +81,23 @@ class PaymentControllerTest {
     }
 
     @Test
+    void createPaymentIntentIsUnavailableWhenCommerceIsDisabled() {
+        PaymentController controller = new PaymentController();
+
+        ResponseEntity<?> response = controller.createPaymentIntent(
+                Map.of("items", List.of()), "123e4567-e89b-12d3-a456-426614174000", null);
+
+        assertEquals(503, response.getStatusCodeValue());
+        assertEquals(Map.of("error", "Online ordering is not enabled"), response.getBody());
+    }
+
+    @Test
     void createPaymentIntentReturnsUnavailableWhenStripeIsNotConfigured() {
         PaymentController controller = new PaymentController();
         StripeService stripeService = mock(StripeService.class);
         ReflectionTestUtils.setField(controller, "stripeService", stripeService);
+        ReflectionTestUtils.setField(controller, "commerceEnabled", true);
+        when(stripeService.isConfigured()).thenReturn(false);
 
         ResponseEntity<?> response = controller.createPaymentIntent(
                 Map.of("items", List.of()), "123e4567-e89b-12d3-a456-426614174000", null);

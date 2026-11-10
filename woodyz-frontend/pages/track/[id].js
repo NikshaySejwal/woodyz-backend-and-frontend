@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import { useAuthGuard } from '../../hooks/useAuthGuard';
 import LoadingScreen from '../../components/ui/LoadingScreen';
 import api from '../../lib/api';
+import { formatCurrency } from '../../lib/currency';
 
 export default function TrackOrder() {
   const router = useRouter();
@@ -63,7 +64,7 @@ export default function TrackOrder() {
               </div>
               <div className="bg-white border-4 border-charcoal rounded-2xl px-6 py-4 shadow-[6px_6px_0px_0px_#3A322B]">
                 <p className="text-[10px] font-black uppercase tracking-widest text-charcoal/40 mb-1">Total</p>
-                <p className="text-2xl font-black text-cedar">${order.totalAmount.toFixed(2)}</p>
+                <p className="text-2xl font-black text-cedar">{formatCurrency(order.totalAmount)}</p>
               </div>
             </div>
           </header>
