@@ -1,7 +1,6 @@
 package com.example.woodyzbackend.security;
 
 import java.io.IOException;
-
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -14,15 +13,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.web.filter.OncePerRequestFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-    private static final Logger LOG = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
-
-        LOG.info("JwtAuthenticationFilter: processing {} {}", request.getMethod(), request.getRequestURI());
-
-
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final Logger LOG = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     @Autowired
     private JwtTokenProvider tokenProvider;
@@ -34,8 +31,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private PostgresRlsContext rlsContext;
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain)
             throws ServletException, IOException {
+        LOG.info("JwtAuthenticationFilter: processing {} {}", request.getMethod(), request.getRequestURI());
         String jwt = getJwtFromRequest(request);
 
         if (rlsContext.isEnabled()) {
@@ -56,8 +56,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String username = tokenProvider.getUsernameFromJwtToken(jwt);
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
             if (userDetails.isEnabled()) {
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
@@ -67,8 +68,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isAuthenticationEndpoint(HttpServletRequest request) {
-        return "POST".equalsIgnoreCase(request.getMethod())
-                && ("/api/auth/login".equals(request.getRequestURI())
+        return "POST".equalsIgnoreCase(request.getMethod()) &&
+                ("/api/auth/login".equals(request.getRequestURI())
                         || "/api/auth/signup".equals(request.getRequestURI()));
     }
 
