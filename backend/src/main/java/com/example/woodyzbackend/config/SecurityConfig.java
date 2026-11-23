@@ -14,6 +14,10 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.http.HttpMethod;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.cors.CorsConfiguration;
 
 import com.example.woodyzbackend.security.JwtAuthenticationFilter;
 import com.example.woodyzbackend.security.AdminAuditFilter;
@@ -91,6 +95,7 @@ public class SecurityConfig {
                 .antMatchers(org.springframework.http.HttpMethod.POST, "/api/payments/webhook").permitAll()
                 .antMatchers(org.springframework.http.HttpMethod.POST, "/api/payments/demo-intent").authenticated()
                 .antMatchers("/api/payments/**").authenticated()
+                .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .anyRequest().authenticated();
 
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
