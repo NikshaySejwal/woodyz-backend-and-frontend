@@ -22,6 +22,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import com.example.woodyzbackend.security.JwtAuthenticationFilter;
 import com.example.woodyzbackend.security.AdminAuditFilter;
 import com.example.woodyzbackend.security.RateLimitFilter;
+import com.example.woodyzbackend.security.RequestLoggingFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -31,6 +32,11 @@ public class SecurityConfig {
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter();
+    }
+
+    @Bean
+    public RequestLoggingFilter requestLoggingFilter() {
+        return new RequestLoggingFilter();
     }
 
     @Bean
@@ -99,6 +105,7 @@ public class SecurityConfig {
                 .anyRequest().authenticated();
 
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterAfter(requestLoggingFilter(), JwtAuthenticationFilter.class);
         http.addFilterAfter(rateLimitFilter, JwtAuthenticationFilter.class);
         http.addFilterAfter(adminAuditFilter, RateLimitFilter.class);
         if (requireHttps) {
