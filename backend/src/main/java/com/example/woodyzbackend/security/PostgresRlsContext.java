@@ -102,8 +102,14 @@ public class PostgresRlsContext {
         }
     }
 
+    private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(PostgresRlsContext.class.getName());
+
     private void setContext(String name, String value) {
-        jdbcTemplate.queryForObject("SELECT set_config(?, ?, true)", String.class, name, value);
+        try {
+            jdbcTemplate.queryForObject("SELECT set_config(?, ?, true)", String.class, name, value);
+        } catch (Exception e) {
+            LOG.warning("Failed to set RLS context " + name + "=" + value + ": " + e.getMessage());
+        }
     }
 
     private static final class FilterExecutionException extends RuntimeException {

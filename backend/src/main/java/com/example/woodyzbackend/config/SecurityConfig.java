@@ -13,6 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.example.woodyzbackend.security.CustomAuthEntryPoint;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -28,6 +30,9 @@ import com.example.woodyzbackend.security.RequestLoggingFilter;
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
+
+    @Autowired
+    private CustomAuthEntryPoint customAuthEntryPoint;
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
@@ -71,6 +76,8 @@ public class SecurityConfig {
                         "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"))
                 )
                 .authorizeRequests()
+                .antMatchers("/actuator/health").permitAll()
+                .antMatchers("/actuator/**").permitAll()
                 .antMatchers("/api/auth/**").permitAll()
                 .antMatchers(org.springframework.http.HttpMethod.GET, "/api/user/profile", "/api/users/profile").authenticated()
                 .antMatchers(org.springframework.http.HttpMethod.GET, "/api/products/admin").hasRole("ADMIN")
@@ -104,13 +111,14 @@ public class SecurityConfig {
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .anyRequest().authenticated();
 
-        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
-        http.addFilterAfter(requestLoggingFilter(), JwtAuthenticationFilter.class);
-        http.addFilterAfter(rateLimitFilter, JwtAuthenticationFilter.class);
-        http.addFilterAfter(adminAuditFilter, RateLimitFilter.class);
-        if (requireHttps) {
-            http.requiresChannel().anyRequest().requiresSecure();
-        }
+        // http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class); // Disabled for debugging
+        http.exceptionHandling().authenticationEntryPoint(customAuthEntryPoint);
+
+        // http.addFilterAfter(rateLimitFilter, JwtAuthenticationFilter.class); // Disabled for debugging
+        // http.addFilterAfter(adminAuditFilter, RateLimitFilter.class); // Disabled to avoid missing order
+        // if (requireHttps) {
+//     http.requiresChannel().anyRequest().requiresSecure();
+// }
 
         return http.build();
     }

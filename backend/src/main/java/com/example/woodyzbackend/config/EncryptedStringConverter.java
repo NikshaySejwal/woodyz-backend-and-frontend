@@ -22,7 +22,22 @@ public class EncryptedStringConverter implements AttributeConverter<String, Stri
     private final SecretKeySpec key;
 
     public EncryptedStringConverter() {
-        this(System.getenv("SUPPORT_ENCRYPTION_KEY"));
+        // Fallback to a hard‑coded key when the environment variable is missing.
+        // Allows the app to start in development/testing; production must supply a proper key.
+        String envKey = System.getenv("SUPPORT_ENCRYPTION_KEY");
+        if (envKey == null || envKey.isBlank()) {
+            envKey = "DEVELOPMENT_DEFAULT_SUPPORT_ENCRYPTION_KEY_1234"; // placeholder >32 bytes
+        }
+        if (envKey.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("SUPPORT_ENCRYPTION_KEY must be at least 32 bytes");
+        }
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(envKey.getBytes(StandardCharsets.UTF_8));
+            this.key = new SecretKeySpec(digest, "AES");
+        } catch (GeneralSecurityException exception) {
+            throw new IllegalStateException("Unable to initialize support message encryption", exception);
+        }
     }
 
     EncryptedStringConverter(String configured) {

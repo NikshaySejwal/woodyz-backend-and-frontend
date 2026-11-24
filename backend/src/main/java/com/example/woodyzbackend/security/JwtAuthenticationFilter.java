@@ -35,7 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain)
             throws ServletException, IOException {
-        LOG.info("JwtAuthenticationFilter: processing {} {}", request.getMethod(), request.getRequestURI());
+        LOG.info("JwtAuthenticationFilter: START processing {} {}", request.getMethod(), request.getRequestURI());
         String jwt = getJwtFromRequest(request);
 
         if (rlsContext.isEnabled()) {
